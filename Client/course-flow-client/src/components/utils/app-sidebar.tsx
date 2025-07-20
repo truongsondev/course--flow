@@ -1,6 +1,7 @@
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -10,10 +11,12 @@ import {
 } from "@/components/ui/sidebar";
 import MyImage from "@/components/pages/image-kit";
 import { items } from "@/constants/menu-sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NavLink } from "react-router-dom";
 
 export function AppSidebar() {
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarContent className="bg-white">
         <SidebarGroup>
           <SidebarGroupLabel className="mb-6">
@@ -30,10 +33,17 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url} className="flex gap-6">
+                    <NavLink
+                      to={item.url}
+                      className={({ isActive }) =>
+                        isActive
+                          ? "text-black flex gap-6"
+                          : "text-black flex gap-6"
+                      }
+                    >
                       <item.icon />
                       <span>{item.title}</span>
-                    </a>
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -41,6 +51,13 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="flex flex-row items-center justify-start ">
+        <Avatar>
+          <AvatarImage src="https://github.com/shadcn.png" />
+          <AvatarFallback>avt</AvatarFallback>
+        </Avatar>
+        <SidebarMenuButton>Le Truong Son</SidebarMenuButton>
+      </SidebarFooter>
     </Sidebar>
   );
 }

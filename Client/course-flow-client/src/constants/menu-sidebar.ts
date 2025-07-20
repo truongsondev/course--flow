@@ -8,7 +8,7 @@ export const items = [
   },
   {
     title: "Courses",
-    url: "#",
+    url: "courses",
     icon: Inbox,
   },
   {

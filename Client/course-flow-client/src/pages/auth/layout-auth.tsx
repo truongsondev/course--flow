@@ -1,5 +1,6 @@
 import type { FunctionComponent, ReactNode } from "react";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Toaster } from "sonner";
 interface LayoutAuthPageProps {
   children: ReactNode;
   title: string;
@@ -10,6 +11,8 @@ const LayoutAuthPage: FunctionComponent<LayoutAuthPageProps> = ({
 }) => {
   return (
     <Card className="min-h-screen flex flex-col justify-center items-center overflow-auto">
+      <Toaster />
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 place-items-center h-full">
         {/* Hình ảnh chỉ hiển thị ở md trở lên */}
         <CardContent className="hidden md:flex justify-center items-center overflow-y-auto ">
