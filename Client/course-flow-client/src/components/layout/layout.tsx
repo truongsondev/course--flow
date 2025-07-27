@@ -6,7 +6,7 @@ export default function Layout() {
     <SidebarProvider>
       <AppSidebar />
       <main className="w-full">
-        <SidebarTrigger />
+        <SidebarTrigger className="sticky top-0" />
         <div className="p-4 bg-[#FDFBF9] w-full">
           <Outlet />
         </div>

@@ -1,6 +1,8 @@
-import type { FunctionComponent } from "react";
+import { useEffect, useState, type FunctionComponent } from "react";
 import Course from "./course";
-
+import CourseLoading from "../loads/course-loading";
+import { TITLE_IN_COURSE } from "@/constants/text-display";
+import { MyPagination } from "./pagination";
 interface ListCoursesProps {}
 const typedCourse = [
   {
@@ -77,16 +79,31 @@ const typedCourse = [
   },
 ];
 const ListCourses: FunctionComponent<ListCoursesProps> = () => {
-  return (
-    <div className="w-full bg-white px-4">
-      <div className="bg-white shadow-lg py-2 w-full">
-        <span className="text-2xl font-bold">
-          Course and Events For Product Designer
-        </span>
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+  });
+
+  if (loading) {
+    return (
+      <div className="flex flex-wrap items-start gap-4 max-sm:justify-center">
+        {Array.from({ length: 10 }).map((_) => (
+          <CourseLoading></CourseLoading>
+        ))}
       </div>
-      <div className="flex flex-wrap gap-4 justify-start">
+    );
+  }
+  return (
+    <div className="w-full bg-white px-4 m-auto flex flex-col gap-10">
+      <div className="bg-white shadow-lg py-2 w-full hidden sm:block">
+        <span className="text-2xl font-bold ">{TITLE_IN_COURSE}</span>
+      </div>
+      <div className="flex flex-wrap items-start gap-4 max-sm:justify-center">
         <Course courses={typedCourse} />
       </div>
+      <MyPagination />
     </div>
   );
 };

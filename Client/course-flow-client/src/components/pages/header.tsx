@@ -30,7 +30,6 @@ const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
 
   return (
     <header className=" relative w-full flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-4 py-3 ">
-      {/* Search */}
       <div className="w-full md:w-auto ">
         <Command className="border rounded-[20px] overflow-clip bg-[#F3F1EF] opacity-70 w-full md:w-80">
           <CommandInput

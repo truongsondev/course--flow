@@ -25,7 +25,7 @@ const SliderPage: FunctionComponent<SliderPageProps> = () => {
         </div>
       </div>
 
-      <div className="w-full md:w-1/2 flex justify-center md:justify-end">
+      <div className="w-full md:w-1/2 hidden justify-center md:flex">
         <img
           src="/slider.png"
           alt="slider"
