@@ -3,7 +3,13 @@ import Course from "./course";
 import CourseLoading from "../loads/course-loading";
 import { TITLE_IN_COURSE } from "@/constants/text-display";
 import { MyPagination } from "./pagination";
-interface ListCoursesProps {}
+import { CourseService } from "@/services/course.service";
+interface ListCoursesProps {
+  id: number;
+  title: string;
+  author: string;
+  price: number;
+}
 const typedCourse = [
   {
     image: "khoa-hoc-dem-hat-Piano.jpg",
@@ -79,12 +85,29 @@ const typedCourse = [
   },
 ];
 const ListCourses: FunctionComponent<ListCoursesProps> = () => {
+  const instanceCourseService = CourseService.getInstance();
   const [loading, setLoading] = useState(true);
+  const [courses, setCourses] = useState<ListCoursesProps[]>([]);
   useEffect(() => {
     setTimeout(() => {
       setLoading(false);
     }, 2000);
   });
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        const response = await instanceCourseService.getCourseList();
+        console.log("Fetched courses:", response.data);
+        setCourses(response.data as ListCoursesProps[]);
+        console.log("Courses set:", courses);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
 
   if (loading) {
     return (
