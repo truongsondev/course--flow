@@ -5,7 +5,7 @@ A web-based application developed during a technology education project. It enab
 ## Prerequisite
 
 - Operating System - Window 10 or 11
-- react version - v19.x.x
+- React version - v19.x.x
 - NodeJS version -v22.x.x
 
 ## Installation

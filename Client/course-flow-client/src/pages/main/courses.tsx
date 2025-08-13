@@ -13,8 +13,7 @@ const Courses: FunctionComponent<HomeProps> = () => {
       <div className="w-full h-auto mt-4 ">
         <SliderPage />
       </div>
-      <ListCourses />
-      <div>Phân trang ở đây</div>
+      <ListCourses id={0} title={""} author={""} price={0} />
     </div>
   );
 };
