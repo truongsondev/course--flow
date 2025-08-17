@@ -2,9 +2,11 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { OTPModule } from './kafka/otp.module';
+import { DbModule } from './db/db.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, OTPModule, DbModule],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -1,4 +1,5 @@
 import axios, { type AxiosResponse } from "axios";
+import { toast } from "sonner";
 export class EndpointService {
   private static instance: EndpointService;
 
@@ -56,12 +57,20 @@ export class EndpointService {
     return this.request(() => axios.delete<T>(endpoint, option));
   }
 
+  //show error message
+  public showErrorMessage(message: string): void {
+    toast.error(message);
+  }
+
   // handler for errors
   public handleError(error: any): void {
     if (axios.isAxiosError(error)) {
-      console.error("API error:", error.response?.status, error.response?.data);
+      this.showErrorMessage(
+        error.response?.data?.message || "An error occurred"
+      );
     } else {
-      console.error("Unknown error:", error);
+      this.showErrorMessage("An error occurred");
     }
+    return error;
   }
 }

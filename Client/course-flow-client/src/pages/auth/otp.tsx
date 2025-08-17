@@ -5,6 +5,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import authenService from "@/services/authen.serivce";
+import { useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Form,
   FormControl,
@@ -28,20 +31,25 @@ const FormSchema = z.object({
 interface OtpPageProps {}
 
 const OtpPage: FunctionComponent<OtpPageProps> = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { email } = location.state || {};
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       pin: "",
     },
   });
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    toast("You submitted the following values", {
-      description: (
-        <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    });
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    const otp = data.pin.replace(/\s/g, "");
+    const res = await authenService.verifyOtp({ email, otp });
+    console.log(res);
+    if (res.status === 200) {
+      toast.success("OTP verified successfully!");
+      navigate("/login");
+    } else {
+      toast.error("Failed to verify OTP. Please try again.");
+    }
   }
   return (
     <LayoutAuthPage title="Verify Your Account">

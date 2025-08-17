@@ -10,8 +10,55 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
+model Users  {
+  user_id Int @id @default(autoincrement())
+  email String @unique
+  password String
+  avt_url String?
+  bio String?
+  name String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  role_id Int 
+  otp String?
+  otp_expiry DateTime?
+  otp_verified Boolean @default(false)
+  otp_attempts Int @default(0)
+  user_verified Boolean @default(false)
+  token Token[]
+  role Roles @relation(fields: [role_id], references: [role_id])
+}
 
+
+model Roles {
+  role_id Int @id @default(autoincrement())
+  name String @unique
+  created_at DateTime @default(now())
+  updated_at DateTime? @updatedAt
+
+  users Users[]
+  permissions Permissions[] 
+}
+
+model Permissions {
+  permission_id Int @id @default(autoincrement())
+  name String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  role Roles[]
+}
+
+model Token {
+  token_id Int @id @default(autoincrement())
+  user_id Int
+  token String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user Users @relation(fields: [user_id], references: [user_id])
+}

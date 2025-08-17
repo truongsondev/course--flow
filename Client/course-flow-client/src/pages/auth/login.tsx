@@ -16,7 +16,7 @@ import { useNavigate } from "react-router";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formSchema } from "@/lib/validator";
-
+// import { authenService } from "@/services/authen.serivce";
 interface LoginPageProps {}
 
 const LoginPage: FunctionComponent<LoginPageProps> = () => {
@@ -25,9 +25,11 @@ const LoginPage: FunctionComponent<LoginPageProps> = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
+      password: "",
     },
   });
   function onSubmit(values: z.infer<typeof formSchema>) {
+    // authenService.login(values);
     console.log(values);
   }
   return (
@@ -47,6 +49,26 @@ const LoginPage: FunctionComponent<LoginPageProps> = () => {
                     <Input
                       {...field}
                       placeholder="Email"
+                      className=" border-0 border-b-[0.8px] border-b-gray-400 rounded-none focus-visible:outline-none focus-visible:ring-0  shadow-none"
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <div className="flex flex-col gap-2 w-full">
+                    <Input
+                      {...field}
+                      autoComplete="false"
+                      type="password"
+                      placeholder="password"
                       className=" border-0 border-b-[0.8px] border-b-gray-400 rounded-none focus-visible:outline-none focus-visible:ring-0  shadow-none"
                     />
                   </div>

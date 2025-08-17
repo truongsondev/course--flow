@@ -8,39 +8,31 @@ import LayoutAuthPage from "./layout-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formRegisterSchema } from "@/lib/validator";
 import type z from "zod";
-
+import authenService from "@/services/authen.serivce";
+import { useNavigate } from "react-router-dom";
 interface LoginPageProps {}
 
 const RegisterPage: FunctionComponent<LoginPageProps> = () => {
+  const navigate = useNavigate();
   const form = useForm<z.infer<typeof formRegisterSchema>>({
     resolver: zodResolver(formRegisterSchema),
-    defaultValues: { email: "", name: "" },
+    defaultValues: { email: "", password: "" },
   });
+
+  async function onSubmit(value: z.infer<typeof formRegisterSchema>) {
+    try {
+      await authenService.login(value);
+      navigate("/verify-otp", { state: { email: value.email } });
+    } catch (error) {}
+  }
 
   return (
     <LayoutAuthPage title="Welcome To Course Flow">
       <Form {...form}>
         <form
+          onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-8 w-full"
-          onSubmit={form.handleSubmit((values) => console.log(values))}
         >
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <div className="flex flex-col gap-2 w-full">
-                    <Input
-                      {...field}
-                      placeholder="Your full Name"
-                      className=" border-0 border-b-[0.8px] border-b-gray-400 rounded-none focus-visible:outline-none focus-visible:ring-0  shadow-none"
-                    />
-                  </div>
-                </FormControl>
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="email"
@@ -50,7 +42,28 @@ const RegisterPage: FunctionComponent<LoginPageProps> = () => {
                   <div className="flex flex-col gap-2 w-full">
                     <Input
                       {...field}
-                      placeholder="email"
+                      placeholder="Email"
+                      value={field.value ?? ""}
+                      className=" border-0 border-b-[0.8px] border-b-gray-400 rounded-none focus-visible:outline-none focus-visible:ring-0  shadow-none"
+                    />
+                  </div>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <div className="flex flex-col gap-2 w-full">
+                    <Input
+                      {...field}
+                      value={field.value ?? ""}
+                      type="password"
+                      autoComplete="false"
+                      placeholder="Password"
                       className=" border-0 border-b-[0.8px] border-b-gray-400 rounded-none focus-visible:outline-none focus-visible:ring-0  shadow-none"
                     />
                   </div>

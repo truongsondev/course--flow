@@ -45,7 +45,7 @@ const router = createBrowserRouter([
     element: <RegisterPage />,
   },
   {
-    path: "/otp",
+    path: "/verify-otp",
     element: <OtpPage />,
   },
 ]);

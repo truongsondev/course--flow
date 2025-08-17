@@ -4,9 +4,11 @@ import { RouterProvider } from "react-router";
 import "./index.css";
 
 import router from "./routers";
+import { Toaster } from "sonner";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RouterProvider router={router} />
+    <Toaster position="top-right" expand={false} richColors />
   </StrictMode>
 );
