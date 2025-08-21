@@ -4,9 +4,11 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { OTPModule } from './kafka/otp.module';
 import { DbModule } from './db/db.module';
+import { JwtModule } from './jwt/jwt.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
-  imports: [AuthModule, OTPModule, DbModule],
+  imports: [AuthModule, OTPModule, DbModule, JwtModule, RedisModule],
   controllers: [AppController],
   providers: [AppService],
 })

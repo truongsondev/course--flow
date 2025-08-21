@@ -29,6 +29,7 @@ model Users  {
   otp_verified Boolean @default(false)
   otp_attempts Int @default(0)
   user_verified Boolean @default(false)
+  publicKey String? @db.Text 
   token Token[]
   role Roles @relation(fields: [role_id], references: [role_id])
 }

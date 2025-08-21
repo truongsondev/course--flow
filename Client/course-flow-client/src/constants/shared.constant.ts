@@ -10,7 +10,9 @@ export const endpoint = {
   auth: {
     v1: {
       signup: `${BASE_URL}/auth/signup`,
+      signin: `${BASE_URL}/auth/signin`,
       verifyOtp: `${BASE_URL}/auth/verify-otp`,
+      getTtl: `${BASE_URL}/auth/get-ttl`,
     },
   },
 };

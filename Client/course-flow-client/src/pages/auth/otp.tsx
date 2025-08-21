@@ -5,9 +5,10 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import authenService from "@/services/authen.serivce";
-import { useLocation } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import authenService from "@/services/authen.service";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+
 import {
   Form,
   FormControl,
@@ -31,26 +32,68 @@ const FormSchema = z.object({
 interface OtpPageProps {}
 
 const OtpPage: FunctionComponent<OtpPageProps> = () => {
-  const location = useLocation();
   const navigate = useNavigate();
-  const { email } = location.state || {};
+  const [searchParams] = useSearchParams();
+  const [ttl, setTtl] = useState(60);
+  const email = sessionStorage.getItem("email") || "";
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       pin: "",
     },
   });
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
-    const otp = data.pin.replace(/\s/g, "");
-    const res = await authenService.verifyOtp({ email, otp });
-    console.log(res);
-    if (res.status === 200) {
-      toast.success("OTP verified successfully!");
-      navigate("/login");
-    } else {
-      toast.error("Failed to verify OTP. Please try again.");
+  useEffect(() => {
+    const token = searchParams.get("token") || "";
+    if (!token) {
+      navigate("/");
+      return;
     }
+    const fetchTtl = async () => {
+      try {
+        const res = await authenService.getTTL(token);
+        const data = res.data.data.ttl;
+        setTtl(data);
+      } catch (err) {
+        toast("Server error. Please register again.");
+        navigate("/register");
+      }
+    };
+    fetchTtl();
+  });
+
+  useEffect(() => {
+    if (ttl <= 0) return;
+    const timer = setInterval(() => {
+      setTtl((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [ttl]);
+
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    try {
+      if (email === "" || !email) {
+        toast.error("Email not found. Please register first.");
+        navigate("/register");
+        return;
+      }
+
+      const otp = data.pin.replace(/\s/g, "");
+      const res = await authenService.verifyOtp({ email, otp });
+      if (res.status === 200) {
+        toast.success("OTP verified successfully!");
+        navigate("/login");
+      } else {
+        toast.error("Failed to verify OTP. Please try again.");
+      }
+    } catch (error) {}
   }
+
+  function handleResendOtp() {
+    toast.success("OTP has been resent to your email!");
+  }
+
   return (
     <LayoutAuthPage title="Verify Your Account">
       <Form {...form}>
@@ -83,7 +126,20 @@ const OtpPage: FunctionComponent<OtpPageProps> = () => {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full ">
+
+          <div className="flex items-center justify-between">
+            {ttl > 0 ? (
+              <span className="text-sm text-gray-500">
+                Resend available in <span className="text-red-500">{ttl}s</span>
+              </span>
+            ) : (
+              <Button type="button" variant="outline" onClick={handleResendOtp}>
+                Resend OTP
+              </Button>
+            )}
+          </div>
+
+          <Button type="submit" className="w-full bg-[#0099FF]">
             Submit
           </Button>
         </form>
@@ -91,5 +147,4 @@ const OtpPage: FunctionComponent<OtpPageProps> = () => {
     </LayoutAuthPage>
   );
 };
-
 export default OtpPage;

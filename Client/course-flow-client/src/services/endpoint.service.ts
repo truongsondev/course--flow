@@ -32,7 +32,7 @@ export class EndpointService {
   }
 
   // POST request
-  public postEndpoint<T>(
+  public postEndpoint<T = any>(
     endpoint: string,
     data: any,
     option?: any

@@ -1,4 +1,4 @@
-import type { FunctionComponent } from "react";
+import { type FunctionComponent } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AiFillFacebook, AiFillGoogleCircle } from "react-icons/ai";
@@ -8,7 +8,7 @@ import LayoutAuthPage from "./layout-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formRegisterSchema } from "@/lib/validator";
 import type z from "zod";
-import authenService from "@/services/authen.serivce";
+import authenService from "@/services/authen.service";
 import { useNavigate } from "react-router-dom";
 interface LoginPageProps {}
 
@@ -21,8 +21,11 @@ const RegisterPage: FunctionComponent<LoginPageProps> = () => {
 
   async function onSubmit(value: z.infer<typeof formRegisterSchema>) {
     try {
-      await authenService.login(value);
-      navigate("/verify-otp", { state: { email: value.email } });
+      const res = await authenService.register(value);
+      const token = res.data.data.otpToken;
+      console.log("token:::", token);
+      sessionStorage.setItem("email", value.email);
+      navigate(`/verify-otp?token=${token}`);
     } catch (error) {}
   }
 

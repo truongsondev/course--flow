@@ -16,7 +16,8 @@ import { useNavigate } from "react-router";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formSchema } from "@/lib/validator";
-// import { authenService } from "@/services/authen.serivce";
+import authenService from "@/services/authen.service";
+import { toast } from "sonner";
 interface LoginPageProps {}
 
 const LoginPage: FunctionComponent<LoginPageProps> = () => {
@@ -28,8 +29,18 @@ const LoginPage: FunctionComponent<LoginPageProps> = () => {
       password: "",
     },
   });
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // authenService.login(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      const res = await authenService.login(values);
+      const at = res.data.data.accessToken;
+      const rt = res.data.data.refreshToken;
+      const user = res.data.data.user;
+      localStorage.setItem("at", at);
+      localStorage.setItem("rt", rt);
+      localStorage.setItem("user", user);
+      toast.message("Login success");
+      navigate("/");
+    } catch (e) {}
     console.log(values);
   }
   return (

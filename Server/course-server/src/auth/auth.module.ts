@@ -4,11 +4,13 @@ import { AuthController } from './auth.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { logLevel, Partitioners } from 'kafkajs';
 import { DbModule } from 'src/db/db.module';
+import { JwtModule } from 'src/jwt/jwt.module';
 
 @Module({
   controllers: [AuthController],
   providers: [AuthService],
   imports: [
+    JwtModule,
     DbModule,
     ClientsModule.register([
       {
@@ -22,7 +24,7 @@ import { DbModule } from 'src/db/db.module';
           },
           consumer: {
             groupId: 'auth-service-consumer',
-            allowAutoTopicCreation: true, // Đọc cái message mới nhất từ topic
+            allowAutoTopicCreation: true,
           },
           producer: {
             createPartitioner: Partitioners.LegacyPartitioner,

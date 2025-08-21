@@ -4,11 +4,17 @@ import { PrismaClient } from 'generated/prisma';
 import { lastValueFrom } from 'rxjs';
 import * as bcrypt from 'bcrypt';
 import { ROLES } from 'src/enum/roles';
+import Redis from 'ioredis';
+import JWTClient from 'src/jwt/jwt';
+import { generateKeyPairSync } from 'crypto';
+
 @Injectable()
 export class AuthService {
   constructor(
     @Inject('OTP_KAFKA') private readonly kafka: ClientKafka,
-    @Inject('PRISMA_CLIENT') private readonly prisma: PrismaClient, // Assuming PrismaClient is injected
+    @Inject('PRISMA_CLIENT') private readonly prisma: PrismaClient,
+    @Inject('REDIS_CLIENT') private readonly redis: Redis,
+    @Inject('JWT_CLIENT') private readonly jwtClient: JWTClient,
   ) {}
 
   async onModuleInit() {
@@ -19,13 +25,12 @@ export class AuthService {
     const otp = this.generateOtp();
 
     try {
-      await this.prisma.$transaction(async (tx) => {
+      const otpToken = await this.prisma.$transaction(async (tx) => {
         const user = await tx.users.findUnique({ where: { email } });
-        console.log(user);
         if (user && user.user_verified) {
-          console.log('cgrt');
           throw new HttpException('User already exists', HttpStatus.CONFLICT);
         }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         await tx.users.upsert({
@@ -45,15 +50,25 @@ export class AuthService {
             password: hashedPassword,
           },
         });
+
+        const tokenOtp = await bcrypt.hash(email, 10);
+        const ttl = 60;
+        const key = `otp:email:${tokenOtp}`;
+        await this.redis.set(key, tokenOtp, 'EX', ttl);
+
+        await lastValueFrom(
+          this.kafka.emit('otp.send', {
+            email,
+            otp,
+            ts: new Date().toISOString(),
+          }),
+        );
+
+        return tokenOtp;
       });
-
-      const payload = { email, otp, ts: new Date().toISOString() };
-      await lastValueFrom(this.kafka.emit('otp.send', payload));
-
-      return {
-        message: 'OTP sent successfully. Please check your email.',
-      };
+      return { otpToken: otpToken };
     } catch (error) {
+      console.log(error);
       const errorMessage =
         error instanceof HttpException ? error.getResponse() : error.message;
       const status =
@@ -74,6 +89,10 @@ export class AuthService {
    * Payload: { email, otp, ts }
    */
   async verifyOtp(email: string, otp: string) {
+    if (!email) {
+      throw new HttpException('Email invalid', HttpStatus.BAD_REQUEST);
+    }
+
     const user = await this.prisma.users.findUnique({ where: { email } });
 
     if (!user) {
@@ -115,27 +134,78 @@ export class AuthService {
         otp: null,
         otp_expiry: null,
         otp_attempts: 0,
-        role_id: role?.role_id || 2,
+        role_id: role?.role_id || 1,
         user_verified: true,
       },
     });
     return { message: 'OTP verified successfully.' };
   }
 
-  signIn(email: string): string {
+  async getTTL(tokenEmail: string) {
+    const ttl = await this.redis.ttl(`otp:email:${tokenEmail}`);
+    if (ttl === -2) {
+      throw new HttpException('Token not found', 404);
+    }
+    if (ttl === -1) {
+      throw new HttpException('Token has no expiration', 400);
+    }
+    return { ttl: ttl };
+  }
+
+  async signIn(email: string, password: string) {
     // Find user by email
-    const userExists = false;
+    const userExists = await this.prisma.users.findUnique({
+      where: {
+        email: email,
+      },
+    });
     if (!userExists) {
       throw new HttpException('User not found', 404);
     }
 
-    // send otp
-    // verify otp
+    const isMatched = await bcrypt.compare(password, userExists.password);
+    if (!isMatched) {
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    }
 
-    // generate token
+    const isVerified = userExists.user_verified;
+    if (!isVerified) {
+      throw new HttpException(
+        'Email has been registered but not verified, please verify',
+        HttpStatus.CONFLICT,
+      );
+    }
 
-    //return token
+    const { publicKey, privateKey } = generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      publicKeyEncoding: {
+        type: 'spki',
+        format: 'pem',
+      },
+      privateKeyEncoding: {
+        type: 'pkcs8',
+        format: 'pem',
+      },
+    });
 
-    return `User with email ${email} signed up successfully.`;
+    const { accessToken, refreshToken } = await this.jwtClient.createTokenPair(
+      privateKey,
+      { id: userExists.user_id },
+    );
+
+    await this.prisma.users.update({
+      where: {
+        email: email,
+      },
+      data: {
+        publicKey: publicKey,
+      },
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+      user: userExists,
+    };
   }
 }
