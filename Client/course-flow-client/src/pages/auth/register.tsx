@@ -1,99 +1,128 @@
 import { type FunctionComponent } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { AiFillFacebook, AiFillGoogleCircle } from "react-icons/ai";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import LayoutAuthPage from "./layout-auth";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { formRegisterSchema } from "@/lib/validator";
-import type z from "zod";
-import authenService from "@/services/authen.service";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import LayoutAuthPage from "./layout-auth";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { AiFillFacebook, AiFillGoogleCircle } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
-interface LoginPageProps {}
+import { toast } from "sonner";
 
-const RegisterPage: FunctionComponent<LoginPageProps> = () => {
+import authenService from "@/services/authen.service";
+import { formRegisterSchema } from "@/lib/validator";
+
+const RegisterPage: FunctionComponent = () => {
   const navigate = useNavigate();
+
   const form = useForm<z.infer<typeof formRegisterSchema>>({
     resolver: zodResolver(formRegisterSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
-  async function onSubmit(value: z.infer<typeof formRegisterSchema>) {
+  async function onSubmit(values: z.infer<typeof formRegisterSchema>) {
     try {
-      const res = await authenService.register(value);
+      const res = await authenService.register(values);
       const token = res.data.data.otpToken;
-      console.log("token:::", token);
-      sessionStorage.setItem("email", value.email);
-      navigate(`/verify-otp?token=${token}`);
-    } catch (error) {}
+      sessionStorage.setItem("email", values.email);
+      toast.message("Register success, please verify OTP");
+      navigate(`/auth/verify-otp?token=${token}`);
+    } catch (error) {
+      toast.error("Register failed");
+    }
   }
 
   return (
-    <LayoutAuthPage title="Welcome To Course Flow">
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 w-full"
-        >
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <div className="flex flex-col gap-2 w-full">
+    <LayoutAuthPage>
+      <div className="absolute inset-0 bg-black/60" />
+
+      <div className="relative z-10 w-full max-w-md bg-white/10 backdrop-blur-lg rounded-2xl shadow-lg p-8">
+        <h2 className="text-3xl font-bold text-center text-white mb-6">
+          Create Account
+        </h2>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
                     <Input
                       {...field}
                       placeholder="Email"
-                      value={field.value ?? ""}
-                      className=" border-0 border-b-[0.8px] border-b-gray-400 rounded-none focus-visible:outline-none focus-visible:ring-0  shadow-none"
+                      className="bg-transparent text-white placeholder:text-gray-300 border-b border-gray-500 rounded-none focus:ring-0 focus:border-blue-400"
                     />
-                  </div>
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <div className="flex flex-col gap-2 w-full">
+                  </FormControl>
+                  <FormMessage className="text-red-400 text-sm" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
                     <Input
                       {...field}
-                      value={field.value ?? ""}
                       type="password"
-                      autoComplete="false"
                       placeholder="Password"
-                      className=" border-0 border-b-[0.8px] border-b-gray-400 rounded-none focus-visible:outline-none focus-visible:ring-0  shadow-none"
+                      className="bg-transparent text-white placeholder:text-gray-300 border-b border-gray-500 rounded-none focus:ring-0 focus:border-blue-400"
                     />
-                  </div>
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          {/* Nút đăng nhập, đăng ký, đăng nhập bằng Google và Facebook */}
-          <Button
-            type="submit"
-            className="w-full bg-[#0099FF] cursor-pointer hover:bg-white hover:text-[#0099FF] hover:border-[#0099FF] border-2 border-[#0099FF]"
-          >
-            Register
-          </Button>
+                  </FormControl>
+                  <FormMessage className="text-red-400 text-sm" />
+                </FormItem>
+              )}
+            />
 
-          <div className="w-full flex justify-between items-center gap-2">
-            <Button variant="outline" className="hover:cursor-pointer w-[50%]">
-              <AiFillGoogleCircle color="#0099FF" />
-              <span>Google</span>
+            <Button
+              type="submit"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg"
+            >
+              Register
             </Button>
-            <Button variant="outline" className="hover:cursor-pointer w-[50%]">
-              <AiFillFacebook color="#0099FF" />
-              <span>Facebook</span>
-            </Button>
-          </div>
-        </form>
-      </Form>
+
+            <div className="text-center text-gray-300">
+              Already have an account?
+              <Button
+                variant="link"
+                className="text-blue-400 hover:underline ml-1"
+                onClick={() => navigate("/login")}
+              >
+                Login
+              </Button>
+            </div>
+
+            <div className="flex gap-4 mt-4">
+              <Button
+                type="button"
+                className="flex-1 flex items-center gap-2 bg-transparent border border-white/50 text-white hover:bg-white/10"
+              >
+                <AiFillGoogleCircle size={20} /> Google
+              </Button>
+              <Button
+                type="button"
+                className="flex-1 flex items-center gap-2 bg-transparent border border-white/50 text-white hover:bg-white/10"
+              >
+                <AiFillFacebook size={20} /> Facebook
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
     </LayoutAuthPage>
   );
 };

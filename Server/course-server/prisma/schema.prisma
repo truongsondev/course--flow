@@ -30,8 +30,14 @@ model Users  {
   otp_attempts Int @default(0)
   user_verified Boolean @default(false)
   publicKey String? @db.Text 
-  token Token[]
+
+
+  token Tokens[]
   role Roles @relation(fields: [role_id], references: [role_id])
+  course_review CoursesReview?
+  course Courses[]
+
+  @@map("users")
 }
 
 
@@ -43,6 +49,8 @@ model Roles {
 
   users Users[]
   permissions Permissions[] 
+
+  @@map("roles")
 }
 
 model Permissions {
@@ -52,14 +60,58 @@ model Permissions {
   updated_at DateTime @updatedAt
 
   role Roles[]
+
+  @@map("permissions")
 }
 
-model Token {
+model Tokens {
   token_id Int @id @default(autoincrement())
   user_id Int
-  token String
+  access_token String
+  refresh_token String
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
   user Users @relation(fields: [user_id], references: [user_id])
+
+  @@map("tokens")
 }
+
+model Courses {
+  course_id Int @id @default(autoincrement())
+  title String
+  slug String
+  description String
+  thumbnail_url String
+  price Int
+  language String
+  level String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // one to many
+  course_review CoursesReview[]
+
+  user_id Int
+  user Users @relation(fields: [user_id], references: [user_id])
+
+  @@map("courses")
+}
+
+model CoursesReview {
+  course_review_id Int @id @default(autoincrement())
+
+  content String?
+  rating Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  course_id Int
+  course Courses @relation(fields: [course_id], references: [course_id])
+
+  user_id Int @unique
+  user Users @relation(fields: [user_id], references: [user_id])
+
+  @@map("courses_review")
+}
+

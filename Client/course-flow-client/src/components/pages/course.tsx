@@ -1,65 +1,52 @@
 import type { FunctionComponent } from "react";
-import { Button } from "../ui/button";
-import { ShoppingCart } from "lucide-react";
 
-type CourseItem = {
-  image: string;
-  title: string;
-  description: string;
-  author: string;
-  level: string;
-  price: string;
-  rating: number;
-};
+import type { CourseHomeResponse } from "@/dto/response/course.response.dto";
 
-interface CourseProps {
-  courses: CourseItem[];
+import { motion } from "framer-motion";
+
+interface courseProps {
+  course: CourseHomeResponse;
 }
 
-const Course: FunctionComponent<CourseProps> = ({ courses }) => {
+export const Course: FunctionComponent<courseProps> = ({ course }) => {
   return (
-    <>
-      {courses &&
-        courses.map((course, index) => (
-          <div
-            key={index}
-            className="group relative w-[200px] xs:w-[270px] bg-[#FDFBF9] rounded-t-[15px] overflow-hidden"
-          >
-            <div className="flex flex-col items-start justify-start">
-              <img
-                src={course.image}
-                alt={course.title}
-                className="w-full h-[150px] object-cover rounded-t-[10px]"
-              />
-              <div className="flex flex-col gap-2 w-full px-2 pb-3">
-                <h2 className="text-xl font-bold">{course.title}</h2>
-                <p className="text-sm text-gray-600 w-full truncate">
-                  {course.description}
-                </p>
-                <p className="text-sm text-gray-500 flex items-center justify-between">
-                  <span>Author:</span> <span>{course.author}</span>
-                </p>
-                <p className="text-sm text-gray-500 flex items-center justify-between">
-                  <span>Level: </span> <span>{course.level}</span>
-                </p>
-                <div className="flex items-center justify-between w-full">
-                  <p className="text-yellow-500">Rating: {course.rating} ★</p>
-                  <p className="text-lg font-semibold">{course.price}</p>
-                </div>
-              </div>
-            </div>
+    <motion.article
+      key={course.course_id}
+      whileHover={{ y: -6 }}
+      className="bg-white rounded-2xl overflow-hidden shadow-md border hover:shadow-xl transition-shadow"
+    >
+      <div className="relative">
+        <img
+          src={course.thumbnail_url}
+          alt={course.title}
+          className="w-full h-44 object-cover"
+        />
+        <div className="absolute top-3 left-3 bg-indigo-600 text-white text-xs px-2 py-1 rounded">
+          {course.tags[0]}
+        </div>
+      </div>
 
-            <div className="absolute inset-0 bg-sky-100/60 opacity-0  group-hover:opacity-100 transition-opacity flex items-center justify-center ">
-              <Button className="w-[40%] bg-emerald-500 hover:bg-white cursor-pointer border-2 border-emerald-500 hover:text-emerald-500">
-                <span>
-                  <ShoppingCart />
-                </span>
-                Register
-              </Button>
-            </div>
+      <div className="p-4">
+        <div className="font-semibold line-clamp-2">{course.title}</div>
+        <div className="text-xs text-slate-500 mt-1">{course.user_id}</div>
+
+        <div className="mt-3 flex items-center justify-between">
+          <div className="text-sm font-semibold">{course.price}</div>
+          <div className="text-xs text-slate-500">
+            {course.avg_rating} ★ • {course.level}
           </div>
-        ))}
-    </>
+        </div>
+
+        <div className="mt-4 flex gap-2">
+          <button className="flex-1 text-sm py-2 rounded-lg border">
+            Preview
+          </button>
+          <button className="flex-1 text-sm py-2 rounded-lg bg-indigo-600 text-white">
+            Enroll
+          </button>
+        </div>
+      </div>
+    </motion.article>
   );
 };
 

@@ -23,7 +23,7 @@ export class AuthService {
   }
   async signUp(email: string, password: string) {
     const otp = this.generateOtp();
-
+    console.log(otp);
     try {
       const otpToken = await this.prisma.$transaction(async (tx) => {
         const user = await tx.users.findUnique({ where: { email } });
@@ -152,7 +152,7 @@ export class AuthService {
     return { ttl: ttl };
   }
 
-  async signIn(email: string, password: string) {
+  async signIn(email: string, passwordReq: string) {
     // Find user by email
     const userExists = await this.prisma.users.findUnique({
       where: {
@@ -163,7 +163,7 @@ export class AuthService {
       throw new HttpException('User not found', 404);
     }
 
-    const isMatched = await bcrypt.compare(password, userExists.password);
+    const isMatched = await bcrypt.compare(passwordReq, userExists.password);
     if (!isMatched) {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
@@ -176,36 +176,49 @@ export class AuthService {
       );
     }
 
-    const { publicKey, privateKey } = generateKeyPairSync('rsa', {
-      modulusLength: 2048,
-      publicKeyEncoding: {
-        type: 'spki',
-        format: 'pem',
-      },
-      privateKeyEncoding: {
-        type: 'pkcs8',
-        format: 'pem',
-      },
-    });
+    const { publicKey: generatedPublicKey, privateKey: generatedPrivateKey } =
+      generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: {
+          type: 'spki',
+          format: 'pem',
+        },
+        privateKeyEncoding: {
+          type: 'pkcs8',
+          format: 'pem',
+        },
+      });
 
     const { accessToken, refreshToken } = await this.jwtClient.createTokenPair(
-      privateKey,
+      generatedPrivateKey,
       { id: userExists.user_id },
     );
 
+    if (!accessToken || !refreshToken) {
+      throw new HttpException('Create token fail', HttpStatus.BAD_REQUEST);
+    }
     await this.prisma.users.update({
       where: {
         email: email,
       },
       data: {
-        publicKey: publicKey,
+        publicKey: generatedPublicKey,
       },
     });
+    const {
+      password,
+      otp,
+      otp_expiry,
+      otp_verified,
+      otp_attempts,
+      publicKey,
+      ...safeUser
+    } = userExists;
 
     return {
       accessToken,
       refreshToken,
-      user: userExists,
+      user: safeUser,
     };
   }
 }

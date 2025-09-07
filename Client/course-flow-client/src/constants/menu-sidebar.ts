@@ -1,11 +1,6 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
+import { Calendar, Inbox, Settings } from "lucide-react";
 
 export const items = [
-  {
-    title: "Overview",
-    url: "#",
-    icon: Home,
-  },
   {
     title: "Courses",
     url: "courses",
@@ -13,14 +8,10 @@ export const items = [
   },
   {
     title: "My Courses",
-    url: "#",
+    url: "my-courses",
     icon: Calendar,
   },
-  {
-    title: "Search",
-    url: "#",
-    icon: Search,
-  },
+
   {
     title: "Settings",
     url: "#",

@@ -1,73 +1,155 @@
-import { useState, type FunctionComponent } from "react";
+import { type FunctionComponent } from "react";
+import { Link } from "react-scroll";
+import { useNavigate } from "react-router";
+import { useAuth } from "@/contexts/auth-context";
+import { Bell, MessageCircle, Moon, LogOut, UserCog } from "lucide-react";
 import {
-  Command,
-  CommandEmpty,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { AiFillBell, AiFillTrophy } from "react-icons/ai";
-import { Badge } from "@/components/ui/badge";
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarImage } from "@radix-ui/react-avatar";
 
 interface HeaderPageProps {}
 
-const items = [
-  "React",
-  "Next.js",
-  "Tailwind",
-  "Shadcn",
-  "JavaScript",
-  "TypeScript",
-];
-
 const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
-  const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState("");
-
-  const filteredItems = items.filter((item) =>
-    item.toLowerCase().includes(search.toLowerCase())
-  );
-
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  console.log("User in header:", user);
   return (
-    <header className=" relative w-full flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-4 py-3 ">
-      <div className="w-full md:w-auto ">
-        <Command className="border rounded-[20px] overflow-clip bg-[#F3F1EF] opacity-70 w-full md:w-80">
-          <CommandInput
-            placeholder="Tìm kiếm..."
-            value={search}
-            onValueChange={setSearch}
-          />
-          {search && (
-            <CommandList className="absolute top-full z-50 w-full bg-white border shadow-md mt-1 rounded-md">
-              <CommandEmpty>Không tìm thấy kết quả.</CommandEmpty>
-              {filteredItems.map((item) => (
-                <CommandItem
-                  key={item}
-                  onSelect={() => {
-                    setSelected(item);
-                    setSearch(item);
-                  }}
-                >
-                  {item}
-                </CommandItem>
-              ))}
-            </CommandList>
-          )}
-        </Command>
-        {selected && (
-          <p className="mt-2 text-sm text-muted-foreground">
-            Đã chọn: <strong>{selected}</strong>
-          </p>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between max-md:hidden gap-4">
-        <div className="flex items-center gap-1 text-sm text-gray-600">
-          <span className="hidden sm:inline">1024 Trophy</span>
-          <AiFillTrophy className="text-orange-400" />
+    <header className="bg-white/60 backdrop-blur sticky top-0 z-30 shadow-sm">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="text-2xl font-extrabold tracking-tight">
+            Course<span className="text-indigo-600">Flow</span>
+          </div>
+          <nav className="hidden md:flex items-center gap-6 text-sm text-slate-700">
+            <Link
+              to="courses"
+              smooth
+              offset={-70}
+              duration={500}
+              className="hover:text-indigo-600 cursor-pointer"
+            >
+              Courses
+            </Link>
+            <Link
+              to="categories"
+              smooth
+              offset={-70}
+              duration={500}
+              className="hover:text-indigo-600 cursor-pointer"
+            >
+              Categories
+            </Link>
+            <Link
+              to="instructors"
+              smooth
+              offset={-70}
+              duration={500}
+              className="hover:text-indigo-600 cursor-pointer"
+            >
+              Instructors
+            </Link>
+            <Link
+              to="blog"
+              smooth
+              offset={-70}
+              duration={500}
+              className="hover:text-indigo-600 cursor-pointer"
+            >
+              Blog
+            </Link>
+          </nav>
         </div>
-        <AiFillBell className="text-xl" />
-        <Badge className="py-2 px-3 text-xs sm:text-sm">Join Bootcamp</Badge>
+
+        <div className="flex items-center gap-3">
+          {user ? (
+            <div className="flex items-center gap-3">
+              <button className="relative p-2 rounded-full hover:bg-gray-100">
+                <MessageCircle className="w-5 h-5" />
+                <span className="absolute top-1 right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                  1
+                </span>
+              </button>
+
+              <button className="relative p-2 rounded-full hover:bg-gray-100">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1 right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                  3
+                </span>
+              </button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <div className="cursor-pointer">
+                    <Avatar className="w-9 h-9">
+                      <AvatarImage
+                        src={user.avt_url || "t1.png"}
+                        alt={user.name ?? undefined}
+                      />
+                      <AvatarFallback>
+                        {user.name?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="w-64 p-2">
+                  <div className="flex items-center gap-3 px-2 py-2">
+                    <Avatar>
+                      <AvatarImage src={user.avt_url || "t1.png"} />
+                      <AvatarFallback>
+                        {user.name?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span className="font-semibold">{user.name}</span>
+                      <span className="text-xs text-gray-500">
+                        {user.email}
+                      </span>
+                    </div>
+                  </div>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem onClick={() => navigate("/user")}>
+                    <UserCog className="mr-2 h-4 w-4" />
+                    Quản lý tài khoản
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem onClick={() => console.log("Toggle theme")}>
+                    <Moon className="mr-2 h-4 w-4" />
+                    Chế độ theme
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem onClick={logout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Đăng xuất
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={() => navigate("/auth/login")}
+                className="hidden md:inline-block text-sm px-4 py-2 rounded-2xl border"
+              >
+                Log in
+              </button>
+              <button
+                onClick={() => navigate("/auth/register")}
+                className="text-sm px-4 py-2 rounded-2xl bg-indigo-600 text-white shadow-md"
+              >
+                Get Started
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

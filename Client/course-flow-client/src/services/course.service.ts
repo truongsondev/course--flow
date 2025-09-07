@@ -1,6 +1,8 @@
+import type { ApiResponse } from "@/dto/response/auth.response.dto";
 import { endpoint } from "../constants/shared.constant";
 import { EndpointService } from "./endpoint.service";
-export class CourseService {
+import type { CourseHomeResponse } from "@/dto/response/course.response.dto";
+class CourseService {
   private static instance: CourseService;
 
   //singleton pattern
@@ -15,6 +17,10 @@ export class CourseService {
   public getCourseList() {
     const endpointService = EndpointService.getInstance();
     const url = endpoint.course.v1.getAll;
-    return endpointService.getEndpoint(url);
+    console.log("url:::", url);
+    return endpointService.getEndpoint<ApiResponse<CourseHomeResponse[]>>(url);
   }
 }
+
+const courseService = CourseService.getInstance();
+export default courseService;

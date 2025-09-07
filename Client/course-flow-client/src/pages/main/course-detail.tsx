@@ -9,9 +9,7 @@ const lectures = [
 export default function CourseDetail() {
   return (
     <div className="p-6 space-y-8">
-      {/* Header */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Video + Info */}
         <div className="lg:col-span-2 space-y-4">
           <h1 className="text-3xl font-bold">React Fundamentals</h1>
           <p className="text-gray-600">
@@ -19,7 +17,6 @@ export default function CourseDetail() {
             building modern web apps today.
           </p>
 
-          {/* Rating & Stats */}
           <div className="flex items-center space-x-4 text-sm text-gray-500">
             <div className="flex items-center space-x-1 text-yellow-500">
               {[...Array(5)].map((_, i) => (
@@ -37,12 +34,10 @@ export default function CourseDetail() {
             </div>
           </div>
 
-          {/* Author */}
           <p className="text-sm text-gray-500">
             Created by <span className="text-blue-600">John Doe</span>
           </p>
 
-          {/* Video */}
           <div className="aspect-video rounded overflow-hidden shadow">
             <iframe
               width="100%"
@@ -53,24 +48,19 @@ export default function CourseDetail() {
           </div>
         </div>
 
-        {/* Right: Pricing Card */}
         <div className="border rounded-lg p-4 shadow space-y-4 max-w-sm">
-          {/* Course Thumbnail */}
           <img
             src="/t1.png"
             alt="Course Thumbnail"
             className="w-full h-40 object-cover rounded"
           />
 
-          {/* Price */}
           <div className="text-2xl font-bold">$49.99</div>
 
-          {/* Button */}
           <button className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
             Enroll Now
           </button>
 
-          {/* Benefits */}
           <ul className="text-sm text-gray-600 space-y-2">
             <li>✅ Lifetime access</li>
             <li>✅ Certificate of completion</li>
@@ -79,7 +69,6 @@ export default function CourseDetail() {
         </div>
       </div>
 
-      {/* Course Content */}
       <section>
         <h2 className="text-xl font-bold mb-4">Course Content</h2>
         <div className="border rounded divide-y">
@@ -114,7 +103,6 @@ export default function CourseDetail() {
         </div>
       </section>
 
-      {/* Requirements */}
       <section>
         <h2 className="text-xl font-bold mb-4">Requirements</h2>
         <ul className="list-disc pl-6 text-gray-600 space-y-1">
@@ -123,7 +111,6 @@ export default function CourseDetail() {
         </ul>
       </section>
 
-      {/* Description */}
       <section>
         <h2 className="text-xl font-bold mb-4">Description</h2>
         <p className="text-gray-600">
@@ -133,7 +120,6 @@ export default function CourseDetail() {
         </p>
       </section>
 
-      {/* Related Courses */}
       <section>
         <h2 className="text-xl font-bold mb-4">Related Courses</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -8,8 +8,7 @@ export class OtpTokenGuard implements CanActivate {
   ): boolean | Promise<boolean> | Observable<boolean> {
     const request: Request = context.switchToHttp().getRequest();
     const token = request.url;
-    console.log('token:::', token);
-    console.log('request:::', request);
+
     return true;
   }
 }
