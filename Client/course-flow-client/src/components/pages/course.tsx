@@ -3,12 +3,13 @@ import type { FunctionComponent } from "react";
 import type { CourseHomeResponse } from "@/dto/response/course.response.dto";
 
 import { motion } from "framer-motion";
-
+import { useNavigate } from "react-router-dom";
 interface courseProps {
   course: CourseHomeResponse;
 }
 
 export const Course: FunctionComponent<courseProps> = ({ course }) => {
+  const navigate = useNavigate();
   return (
     <motion.article
       key={course.course_id}
@@ -41,7 +42,12 @@ export const Course: FunctionComponent<courseProps> = ({ course }) => {
           <button className="flex-1 text-sm py-2 rounded-lg border">
             Preview
           </button>
-          <button className="flex-1 text-sm py-2 rounded-lg bg-indigo-600 text-white">
+          <button
+            onClick={() => {
+              navigate("/course/" + course.course_id);
+            }}
+            className="flex-1 text-sm py-2 rounded-lg bg-indigo-600 text-white"
+          >
             Enroll
           </button>
         </div>

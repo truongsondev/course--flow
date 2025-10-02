@@ -26,25 +26,25 @@ export class AuthService {
     console.log(otp);
     try {
       const otpToken = await this.prisma.$transaction(async (tx) => {
-        const user = await tx.users.findUnique({ where: { email } });
+        const user = await tx.user.findUnique({ where: { email } });
         if (user && user.user_verified) {
           throw new HttpException('User already exists', HttpStatus.CONFLICT);
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await tx.users.upsert({
+        await tx.user.upsert({
           where: { email },
           update: {
             otp,
             otp_expiry: new Date(Date.now() + 60 * 1000),
             otp_verified: false,
-            otp_attempts: 0,
+            otp_attempts: user ? user.otp_attempts + 1 : 0,
             password: hashedPassword,
           },
           create: {
             email,
-            role_id: 1,
+            role: ROLES.GUEST,
             otp,
             otp_expiry: new Date(Date.now() + 5 * 60 * 1000),
             password: hashedPassword,
@@ -93,7 +93,7 @@ export class AuthService {
       throw new HttpException('Email invalid', HttpStatus.BAD_REQUEST);
     }
 
-    const user = await this.prisma.users.findUnique({ where: { email } });
+    const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -114,27 +114,22 @@ export class AuthService {
       throw new HttpException('OTP attempts exceeded', HttpStatus.BAD_REQUEST);
     }
     if (user.otp !== otp) {
-      await this.prisma.users.update({
+      await this.prisma.user.update({
         where: { email },
         data: { otp_attempts: { increment: 1 } },
       });
       throw new HttpException('Invalid OTP', HttpStatus.BAD_REQUEST);
     }
-    const role = await this.prisma.roles.findUnique({
-      where: {
-        name: ROLES.STUDENT,
-      },
-    });
-    console.log(role);
+
     // OTP hợp lệ
-    await this.prisma.users.update({
+    await this.prisma.user.update({
       where: { email },
       data: {
         otp_verified: true,
         otp: null,
         otp_expiry: null,
         otp_attempts: 0,
-        role_id: role?.role_id || 1,
+        role: ROLES.STUDENT,
         user_verified: true,
       },
     });
@@ -154,7 +149,7 @@ export class AuthService {
 
   async signIn(email: string, passwordReq: string) {
     // Find user by email
-    const userExists = await this.prisma.users.findUnique({
+    const userExists = await this.prisma.user.findUnique({
       where: {
         email: email,
       },
@@ -191,27 +186,19 @@ export class AuthService {
 
     const { accessToken, refreshToken } = await this.jwtClient.createTokenPair(
       generatedPrivateKey,
-      { id: userExists.user_id },
+      { id: userExists.id },
     );
 
     if (!accessToken || !refreshToken) {
       throw new HttpException('Create token fail', HttpStatus.BAD_REQUEST);
     }
-    await this.prisma.users.update({
-      where: {
-        email: email,
-      },
-      data: {
-        publicKey: generatedPublicKey,
-      },
-    });
+
     const {
       password,
       otp,
       otp_expiry,
       otp_verified,
       otp_attempts,
-      publicKey,
       ...safeUser
     } = userExists;
 

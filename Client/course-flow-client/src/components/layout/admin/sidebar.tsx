@@ -20,7 +20,7 @@ const menu = [
 export default function Sidebar() {
   return (
     <aside className="w-64 h-screen border-r bg-white flex flex-col">
-      <div className="p-4 font-bold text-xl">EduAdmin</div>
+      <div className="p-4 font-bold text-xl">Course</div>
       <nav className="flex-1 px-2 space-y-1">
         {menu.map((item, i) => (
           <button

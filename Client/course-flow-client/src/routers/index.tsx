@@ -9,6 +9,9 @@ import MyCoursesPage from "@/pages/main/my-course";
 import HomePage from "@/pages/main/home";
 import AdminPage from "@/pages/admin/admin";
 import LayoutAdmin from "@/components/layout/admin/index.tsx";
+import CourseDetail from "@/pages/main/course-detail";
+import InstructorDashboard from "@/pages/instructor/instructor";
+import NotFoundPage from "@/pages/main/not_found";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -18,7 +21,10 @@ const router = createBrowserRouter([
         index: true,
         element: <HomePage />,
       },
-      {},
+      {
+        path: "course/:id",
+        element: <CourseDetail />,
+      },
       {
         path: "my-courses",
         element: <MyCoursesPage />,
@@ -55,6 +61,14 @@ const router = createBrowserRouter([
         element: <AdminPage />,
       },
     ],
+  },
+  {
+    path: "/instructor",
+    element: <InstructorDashboard />,
+  },
+  {
+    path: "*",
+    element: <NotFoundPage />,
   },
 ]);
 

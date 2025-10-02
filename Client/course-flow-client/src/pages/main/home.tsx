@@ -20,67 +20,61 @@ export const sampleCourses: CourseHomeResponse[] = [
   {
     course_id: 1,
     title: "Fullstack React & Node: From Zero to Production",
-    slug: "fullstack-react-node",
     description:
       "Học cách xây dựng ứng dụng fullstack với React, Node.js và triển khai lên production.",
     thumbnail_url: "https://picsum.photos/seed/course1/600/400",
     price: 59,
-    language: "English",
     level: "Intermediate",
+    category: "Development",
     created_at: new Date("2024-01-10"),
     updated_at: new Date("2024-02-15"),
-    user_id: 101,
-    name: "Lê Trường Sơn",
     avg_rating: 4.8,
-    tags: ["React", "Node", "Fullstack"], // 👈
+    tags: ["React", "Node", "Fullstack"],
   },
   {
     course_id: 2,
     title: "UI/UX Design Bootcamp: Figma to Prototype",
-    slug: "ui-ux-design-figma",
     description:
       "Thực hành thiết kế UI/UX với Figma và xây dựng prototype hoàn chỉnh.",
     thumbnail_url: "https://picsum.photos/seed/course2/600/400",
     price: 39,
-    language: "Vietnamese",
     level: "Beginner",
+    category: "Development",
+
     created_at: new Date("2024-03-05"),
     updated_at: new Date("2024-03-10"),
-    user_id: 102,
-    name: "Minh Hằng",
+
     avg_rating: 4.7,
     tags: ["Design", "Figma"], // 👈
   },
   {
     course_id: 3,
     title: "Data Structures & Algorithms in TypeScript",
-    slug: "dsa-typescript",
     description:
       "Nắm vững cấu trúc dữ liệu và thuật toán với TypeScript thông qua ví dụ thực tế.",
     thumbnail_url: "https://picsum.photos/seed/course3/600/400",
     price: 49,
-    language: "English",
     level: "Advanced",
+    category: "Development",
+
     created_at: new Date("2024-04-01"),
     updated_at: new Date("2024-04-12"),
-    user_id: 103,
-    name: "Anh Tú",
+
     avg_rating: 4.9,
     tags: ["Algorithms", "TypeScript"], // 👈
   },
   {
     course_id: 4,
     title: "DevOps Essentials: Docker & Kubernetes",
-    slug: "devops-docker-k8s",
     description: "Khóa học DevOps cơ bản giúp bạn làm chủ Docker & Kubernetes.",
     thumbnail_url: "https://picsum.photos/seed/course4/600/400",
     price: 45,
-    language: "English",
     level: "Intermediate",
+    category: "Development",
+
     created_at: new Date("2024-05-20"),
     updated_at: new Date("2024-06-01"),
-    user_id: 104,
-    name: "Ngọc Lan",
+
     avg_rating: 4.6,
     tags: ["DevOps", "Docker", "Kubernetes"], // 👈
   },
@@ -100,7 +94,7 @@ export default function HomePage(): JSX.Element {
               transition={{ duration: 0.6 }}
               className="text-4xl md:text-6xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-pink-500"
             >
-              intensive online learning
+              Intensive online learning
               <br />
               <span className="text-slate-800">
                 Build skill, achieve the goal

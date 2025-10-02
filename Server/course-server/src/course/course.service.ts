@@ -19,4 +19,14 @@ export class CourseService {
 
     return courses;
   }
+
+  async getAllCategories() {
+    const categories = await this.prisma.category.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+    return categories;
+  }
 }

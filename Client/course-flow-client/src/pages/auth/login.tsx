@@ -36,12 +36,15 @@ const LoginPage: FunctionComponent = () => {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const res = await authenService.login(values);
-      const at = res.data.data.accessToken;
-      const rt = res.data.data.refreshToken;
+      const accessToken = res.data.data.accessToken;
+      const refreshToken = res.data.data.refreshToken;
       const user = res.data.data.user;
-      login({ user, accessToken: at, refreshToken: rt });
-
-      navigate("/");
+      if (accessToken && refreshToken && user) {
+        login({ user, accessToken: accessToken, refreshToken: refreshToken });
+        navigate("/");
+      } else {
+        toast.error("Login failed. Please try again.");
+      }
     } catch (e) {
       toast.error("An error occurred during login. Please try again.");
     }
@@ -119,7 +122,7 @@ const LoginPage: FunctionComponent = () => {
               <Button
                 variant="link"
                 className="text-blue-400 hover:underline ml-1"
-                onClick={() => navigate("/register")}
+                onClick={() => navigate("/auth/register")}
               >
                 Register
               </Button>

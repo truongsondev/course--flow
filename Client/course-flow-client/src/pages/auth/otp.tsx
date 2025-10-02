@@ -84,7 +84,7 @@ const OtpPage: FunctionComponent = () => {
       const res = await authenService.verifyOtp({ email, otp });
       if (res.status === 200) {
         toast.success("OTP verified successfully!");
-        navigate("/login");
+        navigate("/auth/login");
       } else {
         toast.error("Failed to verify OTP. Please try again.");
       }

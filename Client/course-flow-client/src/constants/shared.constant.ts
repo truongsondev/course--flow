@@ -5,6 +5,7 @@ export const endpoint = {
       getAll: `${BASE_URL}/courses`,
       getById: (id: string) => `/api/courses/${id}`,
       getUserCourses: (userId: string) => `/api/users/${userId}/courses`,
+      getAllCategories: `${BASE_URL}/categories`,
     },
   },
   auth: {

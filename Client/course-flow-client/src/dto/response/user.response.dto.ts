@@ -4,8 +4,8 @@ export interface UserResponse {
   avt_url: string | null;
   bio: string | null;
   name: string | null;
-  created_at: string; // hoặc Date nếu bạn parse thành Date object
-  updated_at: string; // hoặc Date
+  created_at: Date;
+  updated_at: Date;
   role_id: number;
   user_verified: boolean;
 }
