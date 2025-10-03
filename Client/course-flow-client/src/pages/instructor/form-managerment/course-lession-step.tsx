@@ -72,7 +72,14 @@ function CourseLessionStep({
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input type="file" accept="image/*, text/*" {...field} />
+                  <Input
+                    type="file"
+                    accept="text/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      field.onChange(file ? file : null);
+                    }}
+                  />
                 </FormControl>
               </FormItem>
             )}
@@ -88,7 +95,7 @@ function CourseLessionStep({
                     accept="video/*"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      field.onChange(file ? file.name : "");
+                      field.onChange(file ? file : null);
                     }}
                   />
                 </FormControl>

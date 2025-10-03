@@ -1,5 +1,6 @@
 import type {
   ApiResponse,
+  imageKitResponse,
   SignInResponse,
   SignUpResponse,
   TTLResponse,
@@ -47,6 +48,14 @@ class AuthenService {
     const url = `${endpoint.auth.v1.getTtl}?emailToken=${emailToken}`;
     console.log(url);
     return await endpointService.getEndpoint<ApiResponse<TTLResponse>>(url);
+  }
+
+  public async getSignedUrl() {
+    const endpointService = EndpointService.getInstance();
+    const url = endpoint.auth.v1.getSignatureUrl;
+    return await endpointService.getEndpoint<ApiResponse<imageKitResponse>>(
+      url
+    );
   }
 }
 

@@ -1,5 +1,14 @@
-import { Controller, Get, HttpCode, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { CourseService } from './course.service';
+import { CreateCourseDto } from 'src/dto/request/course/course.request.dto';
 
 @Controller()
 export class CoursesController {
@@ -16,5 +25,18 @@ export class CoursesController {
   @HttpCode(200)
   getAllCategories() {
     return this.courseService.getAllCategories();
+  }
+
+  @Post('create-course')
+  @HttpCode(201)
+  @UsePipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  )
+  createCourse(@Body() courseData: CreateCourseDto) {
+    return this.courseService.createCourse(courseData);
   }
 }

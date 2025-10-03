@@ -7,6 +7,7 @@ import { ROLES } from 'src/enum/roles';
 import Redis from 'ioredis';
 import JWTClient from 'src/jwt/jwt';
 import { generateKeyPairSync } from 'crypto';
+import ImageKit from 'imagekit';
 
 @Injectable()
 export class AuthService {
@@ -207,5 +208,16 @@ export class AuthService {
       refreshToken,
       user: safeUser,
     };
+  }
+
+  getSignature() {
+    const imagekit = new ImageKit({
+      publicKey: process.env.IMAGEKIT_PUBLIC_KEY || '',
+      privateKey: process.env.IMAGEKIT_PRIVATE_KEY || '',
+      urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || '',
+    });
+
+    const signature = imagekit.getAuthenticationParameters();
+    return signature;
   }
 }

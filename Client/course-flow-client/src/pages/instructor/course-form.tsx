@@ -20,12 +20,14 @@ import courseService from "@/services/course.service";
 import CourseInforStep from "./form-managerment/course-infor-step";
 import CourseSessionStep from "./form-managerment/course-session-step";
 import CourseDemoStep from "./form-managerment/course-demo-step";
+import CourseReviewStep from "./form-managerment/course-review-step";
+import { createObjectURL } from "@/lib/utils";
 
 const lessonSchema = z.object({
   title: z.string().min(1, "Lesson title is required"),
   position: z.number().min(1),
-  doc_url: z.string().optional(),
-  video_url: z.string().optional(),
+  doc_url: z.union([z.string(), z.instanceof(File)]).optional(),
+  video_url: z.union([z.string(), z.instanceof(File)]).optional(),
 });
 
 const sessionSchema = z.object({
@@ -39,10 +41,20 @@ const courseSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters"),
   category_id: z.number().min(1, "Category is required"),
   price: z.number().nonnegative("Price must be >= 0").min(0),
-  thumbnailUrl: z.string().optional(),
-  videoUrl: z.string().optional(),
+  thumbnailUrl: z.union([
+    z.string().min(1, "Thumbnail is required"),
+    z.instanceof(File),
+  ]),
+  videoUrl: z.union([
+    z.string().min(1, "Video is required"),
+    z.instanceof(File),
+  ]),
+
   status: z.enum(["draft", "published", "paused"]),
-  sessions: z.array(sessionSchema),
+  requirements: z
+    .array(z.string().min(1, "Requirement cannot be empty"))
+    .optional(),
+  sessions: z.array(sessionSchema).min(1, "At least one session is required"),
 });
 
 export type CourseFormType = z.infer<typeof courseSchema>;
@@ -67,6 +79,7 @@ export const NewCourseWizard: React.FC<{
       price: 0,
       thumbnailUrl: "",
       videoUrl: "",
+      requirements: [],
       status: "draft",
       sessions: [],
     },
@@ -108,8 +121,8 @@ export const NewCourseWizard: React.FC<{
 
     if (step === 1)
       fieldsToValidate = ["price", "title", "description", "category_id"];
-    if (step === 2) fieldsToValidate = [];
-    if (step === 3) fieldsToValidate = [];
+    if (step === 2) fieldsToValidate = [`sessions`];
+    if (step === 3) fieldsToValidate = ["thumbnailUrl", "videoUrl"];
 
     const valid = await formCourse.trigger(fieldsToValidate, {
       shouldFocus: true,
@@ -121,8 +134,12 @@ export const NewCourseWizard: React.FC<{
   };
 
   const handleFormSubmit = (value: CourseFormType) => {
+    console.log("Final form values:", value);
     onSubmit(value);
   };
+
+  const videoUrl = createObjectURL(formCourse.watch("videoUrl"));
+  const thumbnailUrl = createObjectURL(formCourse.watch("thumbnailUrl"));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -131,7 +148,10 @@ export const NewCourseWizard: React.FC<{
           + New Course
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[999px] h-[75vh] max-w-none max-h-none p-0 bg-gradient-to-br from-white via-indigo-50 to-purple-50 rounded-3xl shadow-2xl overflow-hidden">
+      <DialogContent
+        aria-describedby={undefined}
+        className="w-[999px] h-[75vh] max-w-none max-h-none p-0 bg-gradient-to-br from-white via-indigo-50 to-purple-50 rounded-3xl shadow-2xl overflow-hidden"
+      >
         <div className="grid grid-cols-12 h-full w-full">
           <div className="col-span-8 p-10 overflow-y-auto">
             <DialogHeader>
@@ -154,7 +174,12 @@ export const NewCourseWizard: React.FC<{
               </div>
 
               <Form {...formCourse}>
-                <form onSubmit={formCourse.handleSubmit(handleFormSubmit)}>
+                <form
+                  onSubmit={formCourse.handleSubmit(
+                    handleFormSubmit,
+                    (errors) => console.log("❌ Errors", errors)
+                  )}
+                >
                   <AnimatePresence mode="wait">
                     {step === 1 && (
                       <CourseInforStep
@@ -180,21 +205,26 @@ export const NewCourseWizard: React.FC<{
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -30 }}
-                        className="space-y-6"
+                        className="flex flex-col h-full"
                       >
-                        <h4 className="font-semibold text-2xl text-indigo-700">
-                          Review
-                        </h4>
-                        <pre className="bg-gray-50 p-4 rounded-2xl text-xs max-h-96 overflow-y-auto">
-                          {JSON.stringify(formCourse.getValues(), null, 2)}
-                        </pre>
+                        <CourseReviewStep formCourse={formCourse} />
+                        <div className="flex justify-between mt-4 pt-4 border-t">
+                          <Button
+                            variant="outline"
+                            type="button"
+                            className="rounded-xl px-6"
+                            onClick={() => setStep(step - 1)}
+                          >
+                            Back
+                          </Button>
 
-                        <Button
-                          type="submit"
-                          className="w-full rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-lg py-6"
-                        >
-                          Save Course
-                        </Button>
+                          <Button
+                            type="submit"
+                            className="rounded-xl px-6 bg-indigo-500 text-white"
+                          >
+                            Save Course
+                          </Button>
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -225,7 +255,6 @@ export const NewCourseWizard: React.FC<{
             </DialogHeader>
           </div>
 
-          {/* Live preview */}
           <div className="col-span-4 bg-white/60 backdrop-blur-xl p-8 flex flex-col items-start justify-start border-l overflow-y-auto">
             <h3 className="text-2xl font-bold text-indigo-700 mb-4">
               Live Preview
@@ -234,7 +263,7 @@ export const NewCourseWizard: React.FC<{
             <div className="w-full h-56 relative">
               {formCourse.watch("videoUrl") && isPlaying ? (
                 <video
-                  src={formCourse.watch("videoUrl")}
+                  src={videoUrl}
                   controls
                   autoPlay
                   className="w-full h-56 object-cover rounded-2xl shadow-lg"
@@ -249,7 +278,7 @@ export const NewCourseWizard: React.FC<{
                   }}
                 >
                   <img
-                    src={formCourse.watch("thumbnailUrl")}
+                    src={thumbnailUrl}
                     alt="Preview"
                     className="w-full h-56 object-cover rounded-2xl shadow-lg"
                   />

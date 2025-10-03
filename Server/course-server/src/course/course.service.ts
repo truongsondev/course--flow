@@ -1,5 +1,6 @@
 import { HttpException, Inject } from '@nestjs/common';
 import { PrismaClient } from 'generated/prisma';
+import { CreateCourseDto } from 'src/dto/request/course/course.request.dto';
 
 export class CourseService {
   constructor(@Inject('PRISMA_CLIENT') private readonly prisma: PrismaClient) {}
@@ -28,5 +29,44 @@ export class CourseService {
       },
     });
     return categories;
+  }
+
+  async createCourse(courseData: CreateCourseDto) {
+    // const course = await this.prisma.course.create({
+    //   data: {
+    //     title: courseData.title,
+    //     description: courseData.description,
+    //     categoryId: courseData.category_id,
+    //     price: courseData.price,
+    //     thumbnailUrl: courseData.thumbnailUrl,
+    //     videoUrl: courseData.videoUrl,
+    //     status: courseData.status,
+    //     requirements: {
+    //       create: (courseData.requirements ?? []).map((req) => ({
+    //         text: req,
+    //       })),
+    //     },
+    //     sessions: {
+    //       create: courseData.sessions.map((s) => ({
+    //         title: s.title,
+    //         position: s.position,
+    //         lessons: {
+    //           create: s.lessons.map((l) => ({
+    //             title: l.title,
+    //             position: l.position,
+    //             doc_url: l.doc_url,
+    //             video_url: l.video_url,
+    //           })),
+    //         },
+    //       })),
+    //     },
+    //   },
+    //   include: {
+    //     requirements: true,
+    //     sessions: {
+    //       include: { lessons: true },
+    //     },
+    //   },
+    // });
   }
 }

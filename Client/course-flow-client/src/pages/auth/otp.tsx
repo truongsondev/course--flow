@@ -57,7 +57,7 @@ const OtpPage: FunctionComponent = () => {
         setTtl(data);
       } catch (err) {
         toast.error(`${(err as Error).message}` || "Failed to fetch TTL");
-        navigate("/register");
+        navigate("/auth/register");
       }
     };
     fetchTtl();

@@ -14,6 +14,7 @@ export const endpoint = {
       signin: `${BASE_URL}/auth/signin`,
       verifyOtp: `${BASE_URL}/auth/verify-otp`,
       getTtl: `${BASE_URL}/auth/get-ttl`,
+      getSignatureUrl: `${BASE_URL}/auth/get-signature`,
     },
   },
 };

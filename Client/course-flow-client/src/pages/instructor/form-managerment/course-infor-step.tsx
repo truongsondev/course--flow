@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { motion } from "framer-motion";
+import { useFieldArray } from "react-hook-form";
 
 function CourseInforStep({
   formCourse,
@@ -22,6 +23,14 @@ function CourseInforStep({
   formCourse: any;
   categories: { id: number; name: string }[];
 }) {
+  const {
+    fields: requirementFields,
+    append: appendRequirement,
+    remove: removeRequirement,
+  } = useFieldArray({
+    control: formCourse.control,
+    name: "requirements",
+  });
   return (
     <motion.div
       key="step1"
@@ -81,6 +90,47 @@ function CourseInforStep({
           </FormItem>
         )}
       />
+
+      <div className="col-span-2">
+        <label className="block text-sm font-medium mb-2">Requirements</label>
+        <div className="space-y-3">
+          {requirementFields.map((field, index) => (
+            <div key={field.id} className="flex items-center gap-3">
+              <FormField
+                control={formCourse.control}
+                name={`requirements[${index}]`}
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormControl>
+                      <Input
+                        className="rounded-2xl p-4"
+                        placeholder={`Requirement ${index + 1}`}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <button
+                type="button"
+                onClick={() => removeRequirement(index)}
+                className="px-3 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => appendRequirement("")}
+          className="mt-3 px-4 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600"
+        >
+          + Add Requirement
+        </button>
+      </div>
+
       <FormField
         control={formCourse.control}
         name="category_id"

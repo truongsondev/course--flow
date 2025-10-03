@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 import { Pencil, Eye, Users, BarChart2 } from "lucide-react";
-import { NewCourseWizard } from "./course-form";
-import type { courseRequestDto } from "@/dto/request/course.request.dto";
+import { NewCourseWizard, type CourseFormType } from "./course-form";
 import type { CourseInstructorResponse } from "@/dto/response/course.response.dto";
+import { uploadFileToCloud } from "@/lib/utils";
 
 type Course = CourseInstructorResponse;
 const statusColors: Record<Course["status"], string> = {
@@ -13,14 +13,39 @@ const statusColors: Record<Course["status"], string> = {
   draft: "bg-gray-100 text-gray-600",
 };
 
-// ------------------ FORM ------------------
-
-// ------------------ PAGE ------------------
 export const CoursesPage: React.FC<{ courses: Course[] }> = ({ courses }) => {
   const [open, setOpen] = useState(false);
 
-  const handleNewCourse = (data: courseRequestDto) => {
-    console.log("📌 New Course Data:", data);
+  const uploadIfFile = async (
+    value: string | File | undefined,
+    typeFile: string
+  ) => {
+    if (value instanceof File) {
+      const uploaded = await uploadFileToCloud(value, typeFile);
+      return uploaded?.url ?? "";
+    }
+    return value ?? "";
+  };
+
+  const handleNewCourse = async (data: CourseFormType) => {
+    const newData = { ...data };
+    console.log("Submitting new course:", newData);
+    console.time("upload all files");
+    [newData.videoUrl, newData.thumbnailUrl] = await Promise.all([
+      uploadIfFile(newData.videoUrl, "video"),
+      uploadIfFile(newData.thumbnailUrl, "image"),
+    ]);
+
+    await Promise.all(
+      newData.sessions.flatMap((session) =>
+        session.lessons.map(async (lesson) => {
+          lesson.video_url = await uploadIfFile(lesson.video_url, "video");
+          lesson.doc_url = await uploadIfFile(lesson.doc_url, "document");
+        })
+      )
+    );
+    console.timeEnd("upload all files");
+    console.log(newData);
     setOpen(false);
   };
 

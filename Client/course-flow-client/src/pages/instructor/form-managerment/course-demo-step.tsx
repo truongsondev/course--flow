@@ -34,10 +34,8 @@ function CourseDemoStep({ formCourse }: { formCourse: any }) {
                 accept="image/*"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) {
-                    const previewUrl = URL.createObjectURL(file);
-                    field.onChange(previewUrl);
-                  }
+
+                  field.onChange(file ? file : null);
                 }}
               />
             </FormControl>
@@ -57,10 +55,7 @@ function CourseDemoStep({ formCourse }: { formCourse: any }) {
                 accept="video/*"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) {
-                    const previewUrl = URL.createObjectURL(file);
-                    field.onChange(previewUrl);
-                  }
+                  field.onChange(file ? file : null);
                 }}
               />
             </FormControl>

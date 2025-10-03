@@ -49,4 +49,10 @@ export class AuthController {
     console.log(email);
     return this.authService.signIn(email, password);
   }
+
+  @Get('get-signature')
+  @HttpCode(200)
+  getSignature() {
+    return this.authService.getSignature();
+  }
 }

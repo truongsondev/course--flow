@@ -16,3 +16,8 @@ export interface SignInResponse {
 export interface TTLResponse {
   ttl: number;
 }
+export interface imageKitResponse {
+  token: string;
+  expire: number;
+  signature: string;
+}
