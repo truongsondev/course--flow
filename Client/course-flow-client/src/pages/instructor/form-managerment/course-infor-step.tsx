@@ -21,7 +21,7 @@ function CourseInforStep({
   categories,
 }: {
   formCourse: any;
-  categories: { id: number; name: string }[];
+  categories: { id: string; name: string }[];
 }) {
   const {
     fields: requirementFields,
@@ -137,16 +137,13 @@ function CourseInforStep({
         render={({ field }) => (
           <FormItem>
             <FormControl>
-              <Select
-                onValueChange={(val) => field.onChange(Number(val))}
-                value={field.value ? String(field.value) : ""}
-              >
+              <Select onValueChange={field.onChange} value={field.value || ""}>
                 <SelectTrigger className="rounded-2xl p-4">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent className="max-h-60 overscroll-y-auto">
                   {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id.toString()}>
+                    <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
                     </SelectItem>
                   ))}

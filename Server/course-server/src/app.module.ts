@@ -7,6 +7,8 @@ import { DbModule } from './db/db.module';
 import { JwtModule } from './jwt/jwt.module';
 import { RedisModule } from './redis/redis.module';
 import { CourseModule } from './course/course.module';
+import { CloudModule } from './cloud/cloud.module';
+import { UploadModule } from './minio/minio.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { CourseModule } from './course/course.module';
     JwtModule,
     RedisModule,
     CourseModule,
+    CloudModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

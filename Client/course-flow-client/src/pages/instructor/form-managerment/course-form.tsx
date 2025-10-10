@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-
+import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { BookOpen, Image, Layers, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,10 +16,10 @@ import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { CategoriesResponse } from "@/dto/response/course.response.dto";
 import courseService from "@/services/course.service";
-import CourseInforStep from "./form-managerment/course-infor-step";
-import CourseSessionStep from "./form-managerment/course-session-step";
-import CourseDemoStep from "./form-managerment/course-demo-step";
-import CourseReviewStep from "./form-managerment/course-review-step";
+import CourseInforStep from "./course-infor-step";
+import CourseSessionStep from "./course-session-step";
+import CourseDemoStep from "./course-demo-step";
+import CourseReviewStep from "./course-review-step";
 import { createObjectURL } from "@/lib/utils";
 
 const lessonSchema = z.object({
@@ -39,7 +38,7 @@ const sessionSchema = z.object({
 const courseSchema = z.object({
   title: z.string().min(3, "Course title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  category_id: z.number().min(1, "Category is required"),
+  category_id: z.string(),
   price: z.number().nonnegative("Price must be >= 0").min(0),
   thumbnailUrl: z.union([
     z.string().min(1, "Thumbnail is required"),
@@ -62,12 +61,13 @@ export type LessonFileType = "doc_url" | "video_url";
 
 export const NewCourseWizard: React.FC<{
   open: boolean | undefined;
-  setOpen: (open: boolean) => void;
-  onSubmit: (data: CourseFormType) => void;
+  setOpen: (open: boolean | undefined) => void;
+  onSubmit: (data: CourseFormType) => Promise<void>;
 }> = ({ onSubmit, open, setOpen }) => {
   const [step, setStep] = useState(1);
   const [categories, setCategories] = useState<CategoriesResponse[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // react-hook-form init
   const formCourse = useForm<CourseFormType>({
@@ -75,7 +75,7 @@ export const NewCourseWizard: React.FC<{
     defaultValues: {
       title: "",
       description: "",
-      category_id: 0,
+      category_id: "",
       price: 0,
       thumbnailUrl: "",
       videoUrl: "",
@@ -100,7 +100,6 @@ export const NewCourseWizard: React.FC<{
     const fetchCategories = async () => {
       try {
         const res = await courseService.getAllCategories();
-        console.log(res.data.data);
         setCategories(res.data.data);
       } catch (e) {
         toast.error("Failed to load categories");
@@ -133,9 +132,11 @@ export const NewCourseWizard: React.FC<{
     }
   };
 
-  const handleFormSubmit = (value: CourseFormType) => {
-    console.log("Final form values:", value);
-    onSubmit(value);
+  const handleFormSubmit = async (value: CourseFormType) => {
+    setIsSubmitting(true);
+    await onSubmit(value);
+    setIsSubmitting(false);
+    toast.success("Create course success");
   };
 
   const videoUrl = createObjectURL(formCourse.watch("videoUrl"));
@@ -143,23 +144,18 @@ export const NewCourseWizard: React.FC<{
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="lg" className="rounded-xl">
-          + New Course
-        </Button>
-      </DialogTrigger>
       <DialogContent
         aria-describedby={undefined}
         className="w-[999px] h-[75vh] max-w-none max-h-none p-0 bg-gradient-to-br from-white via-indigo-50 to-purple-50 rounded-3xl shadow-2xl overflow-hidden"
       >
-        <div className="grid grid-cols-12 h-full w-full">
+        <div className="grid grid-cols-12 h-full w-full  overflow-y-scroll ">
           <div className="col-span-8 p-10 overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-3xl font-bold text-indigo-700 mb-6">
                 Create New Course
               </DialogTitle>
 
-              <div className="flex items-center justify-between mb-10">
+              <div className="flex items-center justify-between mb-10 ">
                 {steps.map((s, i) => (
                   <div
                     key={i}
@@ -209,20 +205,28 @@ export const NewCourseWizard: React.FC<{
                       >
                         <CourseReviewStep formCourse={formCourse} />
                         <div className="flex justify-between mt-4 pt-4 border-t">
-                          <Button
+                          {/* <Button
                             variant="outline"
                             type="button"
                             className="rounded-xl px-6"
                             onClick={() => setStep(step - 1)}
                           >
                             Back
-                          </Button>
+                          </Button> */}
 
                           <Button
                             type="submit"
-                            className="rounded-xl px-6 bg-indigo-500 text-white"
+                            className="rounded-xl px-6 bg-indigo-500 text-white flex items-center gap-2"
+                            disabled={isSubmitting}
                           >
-                            Save Course
+                            {isSubmitting ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              "Save Course"
+                            )}
                           </Button>
                         </div>
                       </motion.div>

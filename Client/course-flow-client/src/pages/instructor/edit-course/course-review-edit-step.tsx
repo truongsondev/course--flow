@@ -1,11 +1,11 @@
 import type { UseFormReturn } from "react-hook-form";
-import type { CourseFormType } from "./course-form";
 import { createObjectURL } from "@/lib/utils";
+import type { CourseFormTypeEdit } from "./course-form-edit";
 
-function CourseReviewStep({
+function CourseReviewEditStep({
   formCourse,
 }: {
-  formCourse: UseFormReturn<CourseFormType>;
+  formCourse: UseFormReturn<CourseFormTypeEdit>;
 }) {
   const videoUrl = createObjectURL(formCourse.watch("videoUrl"));
   const thumbnailUrl = createObjectURL(formCourse.watch("thumbnailUrl"));
@@ -76,4 +76,4 @@ function CourseReviewStep({
   );
 }
 
-export default CourseReviewStep;
+export default CourseReviewEditStep;

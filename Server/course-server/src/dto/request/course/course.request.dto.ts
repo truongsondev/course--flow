@@ -8,7 +8,6 @@ import {
   ArrayMinSize,
   IsOptional,
   MinLength,
-  IsPositive,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { SessionDto } from './session.request.dto';
@@ -28,9 +27,8 @@ export class CreateCourseDto {
   @MinLength(10)
   description: string;
 
-  @IsNumber()
-  @Min(1)
-  category_id: number;
+  @IsString()
+  category_id: string;
 
   @IsNumber()
   @Min(0)
@@ -44,6 +42,9 @@ export class CreateCourseDto {
 
   @IsEnum(CourseStatus)
   status: CourseStatus;
+
+  @IsString()
+  instructorId: string;
 
   @IsOptional()
   @IsArray()

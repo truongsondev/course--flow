@@ -1,4 +1,4 @@
-import type { sessionRequestDto } from "../request/session.request.dto";
+import type { sessionDTO } from "../request/session.request.dto";
 
 export interface CourseHomeResponse {
   course_id: number;
@@ -19,14 +19,30 @@ export interface CourseInstructorResponse {
   title: string;
   price: number;
   students: number;
-  sessions: sessionRequestDto[];
-  rating?: number;
+  videoUrl: string;
+  thumbnailUrl: string;
+  requirements?: string[];
+  sessions: sessionDTO[];
   status: "published" | "paused" | "draft";
+  avgRating: number;
+  category: CategoriesResponse;
   createdAt: string;
-  thumbnail_url?: string;
+}
+
+export interface CourseEditReponse {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  thumbnailUrl: string;
+  videoUrl: string;
+  requirements?: string[];
+  sessions: sessionDTO[];
+  status: "published" | "paused" | "draft";
+  category: CategoriesResponse;
 }
 
 export interface CategoriesResponse {
-  id: number;
+  id: string;
   name: string;
 }

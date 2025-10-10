@@ -7,14 +7,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
-import type { CourseFormType } from "./course-form";
 import { useRef } from "react";
+import type { CourseFormTypeEdit } from "./course-form-edit";
 
-function CourseLessionStep({
+function CourseLessionEditStep({
   formCourse,
   sIdx,
 }: {
-  formCourse: UseFormReturn<CourseFormType>;
+  formCourse: UseFormReturn<CourseFormTypeEdit>;
   sIdx: number;
 }) {
   const lessionRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -29,6 +29,7 @@ function CourseLessionStep({
 
   const handleAddLesson = () => {
     appendLesson({
+      id: "",
       title: "",
       doc_url: "",
       video_url: "",
@@ -122,4 +123,4 @@ function CourseLessionStep({
   );
 }
 
-export default CourseLessionStep;
+export default CourseLessionEditStep;

@@ -1,7 +1,7 @@
 import { ProfilePage } from "@/components/instructor/profile-page";
 import { Topbar } from "@/components/instructor/topbar";
 import { Sidebar } from "@/components/instructor/sidebar";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,8 @@ import {
 import { DashboardPage } from "./dashboard";
 import { CoursesPage } from "./course-page";
 import type { CourseInstructorResponse } from "@/dto/response/course.response.dto";
+import courseService from "@/services/course.service";
+import { toast } from "sonner";
 const mockStudents: Student[] = [
   {
     id: "s1",
@@ -53,148 +55,6 @@ type Stats = {
   totalCourses: number;
   totalOrders: number;
 };
-
-const mockCourses: CourseInstructorResponse[] = [
-  {
-    id: "c1",
-    title: "React Masterclass",
-    price: 29.99,
-    students: 420,
-    sessions: [
-      {
-        title: "Introduction",
-        position: 1,
-        lessons: [
-          {
-            title: "Welcome to the Course",
-            position: 1,
-            video_url: "https://example.com/intro.mp4",
-          },
-          {
-            title: "Setup & Installation",
-            position: 2,
-            pdf_url: "https://example.com/setup.pdf",
-          },
-        ],
-      },
-      {
-        title: "Advanced Topics",
-        position: 2,
-        lessons: [
-          {
-            title: "Hooks Deep Dive",
-            position: 1,
-            video_url: "https://example.com/hooks.mp4",
-          },
-          {
-            title: "Performance Optimization",
-            position: 2,
-            video_url: "https://example.com/perf.mp4",
-          },
-        ],
-      },
-    ],
-    rating: 4.8,
-    status: "published",
-    createdAt: "2025-09-19T10:00:00Z",
-    thumbnail_url: "https://placehold.co/600x400/react.png",
-  },
-  {
-    id: "c2",
-    title: "NodeJS Pro",
-    price: 19.99,
-    students: 210,
-    sessions: [
-      {
-        title: "Getting Started",
-        position: 1,
-        lessons: [
-          {
-            title: "Node Basics",
-            position: 1,
-            video_url: "https://example.com/node-basics.mp4",
-          },
-          {
-            title: "NPM & Packages",
-            position: 2,
-            pdf_url: "https://example.com/npm.pdf",
-          },
-        ],
-      },
-    ],
-    rating: 4.5,
-    status: "published",
-    createdAt: "2025-09-10T15:30:00Z",
-    thumbnail_url: "https://placehold.co/600x400/node.png",
-  },
-  {
-    id: "c3",
-    title: "TypeScript Deep Dive",
-    price: 24.99,
-    students: 160,
-    sessions: [
-      {
-        title: "Type Basics",
-        position: 1,
-        lessons: [
-          {
-            title: "Primitive Types",
-            position: 1,
-            video_url: "https://example.com/types.mp4",
-          },
-          {
-            title: "Interfaces & Types",
-            position: 2,
-            pdf_url: "https://example.com/interfaces.pdf",
-          },
-        ],
-      },
-      {
-        title: "Generics",
-        position: 2,
-        lessons: [
-          {
-            title: "Generic Functions",
-            position: 1,
-            video_url: "https://example.com/generics.mp4",
-          },
-        ],
-      },
-    ],
-    rating: 4.2,
-    status: "paused",
-    createdAt: "2025-08-25T09:00:00Z",
-    thumbnail_url: "https://placehold.co/600x400/ts.png",
-  },
-  {
-    id: "c4",
-    title: "Next.js Zero to Hero",
-    price: 34.99,
-    students: 95,
-    sessions: [
-      {
-        title: "Getting Started",
-        position: 1,
-        lessons: [
-          {
-            title: "Why Next.js?",
-            position: 1,
-            video_url: "https://example.com/why-next.mp4",
-          },
-          {
-            title: "Setup Project",
-            position: 2,
-            pdf_url: "https://example.com/setup-next.pdf",
-          },
-        ],
-      },
-    ],
-    rating: 4.7,
-    status: "draft",
-    createdAt: "2025-09-01T11:00:00Z",
-    thumbnail_url: "https://placehold.co/600x400/next.png",
-  },
-];
 
 const mockStats: Stats = {
   revenueByMonth: [
@@ -264,8 +124,22 @@ const StudentsPage: React.FC<{ students: Student[] }> = ({ students }) => {
 
 export default function InstructorDashboard() {
   const [active, setActive] = useState<string>("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(false); // reserved if mobile
-
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [courses, setCourses] = useState<CourseInstructorResponse[]>([]);
+  useEffect(() => {
+    try {
+      const fetchCourses = async () => {
+        const result = await courseService.getCourseListForInstructor();
+        if (result.data.success && result.data.data) {
+          console.log(result.data.data);
+          setCourses(result.data.data);
+        }
+      };
+      fetchCourses();
+    } catch (error) {
+      toast.error("Failed to fetch courses. Please try again.");
+    }
+  }, []);
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar active={active} setActive={setActive} />
@@ -275,7 +149,7 @@ export default function InstructorDashboard() {
 
         <div className="mt-6">
           {active === "dashboard" && <DashboardPage stats={mockStats} />}
-          {active === "courses" && <CoursesPage courses={mockCourses} />}
+          {active === "courses" && <CoursesPage courses={courses} />}
           {active === "students" && <StudentsPage students={mockStudents} />}
           {active === "analytics" && <DashboardPage stats={mockStats} />}
           {active === "settings" && <ProfilePage />}

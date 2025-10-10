@@ -6,6 +6,8 @@ export const endpoint = {
       getById: (id: string) => `/api/courses/${id}`,
       getUserCourses: (userId: string) => `/api/users/${userId}/courses`,
       getAllCategories: `${BASE_URL}/categories`,
+      createCourse: `${BASE_URL}/create-course`,
+      editCourse: `${BASE_URL}/course-for-edit`,
     },
   },
   auth: {
@@ -15,6 +17,11 @@ export const endpoint = {
       verifyOtp: `${BASE_URL}/auth/verify-otp`,
       getTtl: `${BASE_URL}/auth/get-ttl`,
       getSignatureUrl: `${BASE_URL}/auth/get-signature`,
+    },
+  },
+  cloud: {
+    v1: {
+      deleteFile: `${BASE_URL}/cloud/delete-file`,
     },
   },
 };

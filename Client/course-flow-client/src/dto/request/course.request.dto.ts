@@ -1,12 +1,29 @@
-import type { sessionRequestDto } from "./session.request.dto";
+import type { createSessionDTO, sessionDTO } from "./session.request.dto";
 
 export interface courseRequestDto {
+  id: string;
   title: string;
   description: string;
-  category_id: number;
+  category_id: string;
   price: number;
-  thumbnail_url?: string;
+  thumbnailUrl: string;
+  videoUrl: string;
   status: string;
-  sessions: sessionRequestDto[];
+  instructorId: string;
+  requirements?: string[];
+  sessions: sessionDTO[];
   // quizzes: QuizRequestDto[];
+}
+
+export interface CreateCourseRequestDto {
+  title: string;
+  description: string;
+  category_id: string;
+  price: number;
+  thumbnailUrl: string;
+  videoUrl: string;
+  status: string;
+  instructorId: string;
+  requirements?: string[];
+  sessions: createSessionDTO[];
 }

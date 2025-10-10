@@ -14,32 +14,32 @@ import {
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { type FieldArrayWithId, type UseFormReturn } from "react-hook-form";
-import CourseLessionStep from "./course-lession-step";
-import type { CourseFormType } from "./course-form";
+import type { CourseFormType } from "../form-managerment/course-form";
 import { useRef, useState } from "react";
+import CourseLessionEditStep from "./course-lession-edit-step";
+import type { CourseFormTypeEdit } from "./course-form-edit";
 
-function CourseSessionStep({
+function CourseSessionEditStep({
   sessionFields,
   appendSession,
   removeSession,
   formCourse,
 }: {
   sessionFields: FieldArrayWithId<CourseFormType, "sessions">[];
-  appendSession: (value: CourseFormType["sessions"][number]) => void;
+  appendSession: (value: CourseFormTypeEdit["sessions"][number]) => void;
   removeSession: (index: number) => void;
-  formCourse: UseFormReturn<CourseFormType>;
+  formCourse: UseFormReturn<CourseFormTypeEdit>;
 }) {
-  // ref mảng chứa các session
   const sessionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [openSession, setOpenSession] = useState<string | undefined>(undefined);
   const handleAddSession = () => {
     appendSession({
+      id: "",
       title: "",
       position: sessionFields.length + 1,
       lessons: [],
     });
 
-    // scroll tới session cuối
     setTimeout(() => {
       const last = sessionRefs.current[sessionFields.length];
       last?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -95,7 +95,7 @@ function CourseSessionStep({
                   )}
                 />
 
-                <CourseLessionStep sIdx={sIdx} formCourse={formCourse} />
+                <CourseLessionEditStep sIdx={sIdx} formCourse={formCourse} />
 
                 <Button
                   variant="destructive"
@@ -116,4 +116,4 @@ function CourseSessionStep({
   );
 }
 
-export default CourseSessionStep;
+export default CourseSessionEditStep;

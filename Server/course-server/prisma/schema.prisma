@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -15,7 +9,7 @@ datasource db {
 }
 
 model User {
-  id        Int   @id @default(autoincrement())
+  id        String   @id @default(cuid())
   email     String   @unique
   password  String
   full_name String?
@@ -26,7 +20,6 @@ model User {
   otp_verified Boolean? @default(false)
   otp_attempts Int     @default(0)
   user_verified Boolean   @default(false)
-
   createdAt DateTime @default(now())
 
   courses        Course[]       @relation("InstructorCourses")
@@ -53,99 +46,92 @@ enum Role {
 }
 
 model Category {
-  id          Int  @id @default(autoincrement())
+  id          String  @id @default(cuid())
   name        String  @unique
   description String?
 
   courses Course[]
 
-
-
   @@map("categories")
 }
 
 model Course {
-  id          Int   @id @default(autoincrement())
+  id          String   @id @default(cuid())
   title       String
-  description String?
+  description String
   instructor  User     @relation("InstructorCourses", fields: [instructorId], references: [id])
-  instructorId Int
-  thumbnailUrl   String
-  videoUrl   String
+  instructorId String
+  thumbnailUrl   String  @db.Text 
+  videoUrl   String  @db.Text 
   requirements CourseRequirement[]
   status     String  @default("draft")
   category    Category? @relation(fields: [categoryId], references: [id])
-  categoryId  Int?
-  price       Decimal  @db.Decimal(10, 2)
+  categoryId  String?
+  price       Int
   createdAt   DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt   DateTime @updatedAt
 
   enrollments    Enrollment[]
   reviews        Review[]
-  sessions        Session[]
-  // quizzes        Quiz[]
+  sessions       Session[]
   courseProgress CourseProgress[]
   courseNotes    CourseNote[]
-
-    
 
   @@map("courses")
 }
 
 model CourseRequirement {
-  id       Int    @id @default(autoincrement())
+  id       String    @id @default(cuid())
   text     String
-  courseId Int
+  courseId String
   course   Course @relation(fields: [courseId], references: [id])
 }
 
 model Enrollment {
-  id         Int   @id @default(autoincrement())
+  id         String   @id @default(cuid())
   user       User     @relation(fields: [userId], references: [id])
-  userId     Int
+  userId     String
   course     Course   @relation(fields: [courseId], references: [id])
-  courseId   Int
+  courseId   String
   enrolledAt DateTime @default(now())
 
   @@map("enrollments")
 }
 
 model Review {
-  id        Int   @id @default(autoincrement())
+  id        String   @id @default(cuid())
   user      User     @relation(fields: [userId], references: [id])
-  userId    Int
+  userId    String
   course    Course   @relation(fields: [courseId], references: [id])
-  courseId  Int
+  courseId  String
   rating    Int
   comment   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@map("reviews")
 }
 
 model Session {
-  id        Int   @id @default(autoincrement())
+  id        String   @id @default(cuid())
   title     String
   position  Int
-  lessionId  Int
-  lessons  Lesson[]  
-
-  courseId  Int
+  lessons   Lesson[]  
+  courseId  String
   course    Course   @relation(fields: [courseId], references: [id])
-
   createdAt DateTime @default(now())
-  expiresAt DateTime
+  expiresAt DateTime @updatedAt
 
   @@map("sessions")
 }
 
 model Lesson {
-  id        Int   @id @default(autoincrement())
+  id        String   @id @default(cuid())
   session    Session   @relation(fields: [sessionId], references: [id])
-  sessionId  Int
+  sessionId  String
   title     String
-  videoUrl   String?
-  docUrl   String?
+  videoUrl   String?  @db.Text 
+  docUrl     String?  @db.Text 
   position  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -155,44 +141,14 @@ model Lesson {
   @@map("lessons")
 }
 
-// model Quiz {
-//   id        Int   @id @default(autoincrement())
-//   course    Course   @relation(fields: [courseId], references: [id])
-//   courseId  Int
-//   title     String
-//   createdAt DateTime @default(now())
-
-//   questions QuizQuestion[]
-// }
-
-// model QuizQuestion {
-//   id        Int   @id @default(autoincrement())
-//   quiz      Quiz     @relation(fields: [quizId], references: [id])
-//   quizId    Int
-//   question  String
-//   position  Int
-//   createdAt DateTime @default(now())
-
-//   answers QuizAnswer[]
-// }
-
-// model QuizAnswer {
-//   id        Int   @id @default(autoincrement())
-//   question  QuizQuestion @relation(fields: [questionId], references: [id])
-//   questionId Int
-//   answer    String
-//   isCorrect Boolean
-//   createdAt DateTime @default(now())
-// }
-
 model CourseProgress {
-  id                 Int   @id @default(autoincrement())
+  id                 String   @id @default(cuid())
   user               User     @relation(fields: [userId], references: [id])
-  userId             Int
+  userId             String
   course             Course   @relation(fields: [courseId], references: [id])
-  courseId           Int
+  courseId           String
   lastLesson         Lesson?  @relation(fields: [lastLessonId], references: [id])
-  lastLessonId       Int?
+  lastLessonId       String?
   progressPercentage Decimal  @db.Decimal(5, 2) @default(0)
   updatedAt          DateTime @default(now())
 
@@ -200,11 +156,11 @@ model CourseProgress {
 }
 
 model CourseNote {
-  id        Int   @id @default(autoincrement())
+  id        String   @id @default(cuid())
   user      User     @relation(fields: [userId], references: [id])
-  userId    Int
+  userId    String
   course    Course   @relation(fields: [courseId], references: [id])
-  courseId  Int
+  courseId  String
   note      String
   createdAt DateTime @default(now())
 
@@ -212,11 +168,11 @@ model CourseNote {
 }
 
 model ChatMessage {
-  id        Int   @id @default(autoincrement())
+  id        String   @id @default(cuid())
   sender    User     @relation("SentMessages", fields: [senderId], references: [id])
-  senderId  Int
+  senderId  String
   receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  receiverId Int
+  receiverId String
   message   String
   sentAt    DateTime @default(now())
 
@@ -224,14 +180,13 @@ model ChatMessage {
 }
 
 model InstructorMsg {
-  id           Int   @id @default(autoincrement())
+  id           String   @id @default(cuid())
   instructor   User     @relation("InstructorMsgs", fields: [instructorId], references: [id])
-  instructorId Int
+  instructorId String
   student      User     @relation("StudentMsgs", fields: [studentId], references: [id])
-  studentId    Int
+  studentId    String
   message      String
   sentAt       DateTime @default(now())
 
   @@map("instructor_msgs")
 }
-

@@ -1,11 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 import { Pencil, Eye, Users, BarChart2 } from "lucide-react";
-import { NewCourseWizard, type CourseFormType } from "./course-form";
-import type { CourseInstructorResponse } from "@/dto/response/course.response.dto";
-import { uploadFileToCloud } from "@/lib/utils";
-
+import {
+  NewCourseWizard,
+  type CourseFormType,
+} from "./form-managerment/course-form";
+import type {
+  CourseEditReponse,
+  CourseInstructorResponse,
+} from "@/dto/response/course.response.dto";
+import { passStringToJson } from "@/lib/utils";
+import instanceCloudService from "@/services/cloud.service";
+import _ from "lodash";
+import type { CreateCourseRequestDto } from "@/dto/request/course.request.dto";
+import courseService from "@/services/course.service";
+import { toast } from "sonner";
+import cloudService from "@/services/cloud.service";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { ACTION } from "@/constants/action";
+import { EditCourseForm } from "./edit-course/course-form-edit";
+import { useCourseModals } from "@/hooks/useCourseModals";
 type Course = CourseInstructorResponse;
 const statusColors: Record<Course["status"], string> = {
   published: "bg-green-100 text-green-700",
@@ -13,25 +28,51 @@ const statusColors: Record<Course["status"], string> = {
   draft: "bg-gray-100 text-gray-600",
 };
 
-export const CoursesPage: React.FC<{ courses: Course[] }> = ({ courses }) => {
+export const CoursesPage: React.FC<{ courses: CourseInstructorResponse[] }> = ({
+  courses,
+}) => {
   const [open, setOpen] = useState(false);
-
+  const uploadedFileIds: string[] = [];
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { action, courseId, openModal, closeModal } = useCourseModals();
   const uploadIfFile = async (
     value: string | File | undefined,
     typeFile: string
   ) => {
     if (value instanceof File) {
-      const uploaded = await uploadFileToCloud(value, typeFile);
+      const uploaded = await instanceCloudService.uploadFileToCloud(
+        value,
+        typeFile
+      );
+      if (uploaded && uploaded.fileId) {
+        uploadedFileIds.push(uploaded.fileId);
+      }
       return uploaded?.url ?? "";
     }
     return value ?? "";
   };
 
-  const handleNewCourse = async (data: CourseFormType) => {
-    const newData = { ...data };
-    console.log("Submitting new course:", newData);
-    console.time("upload all files");
-    [newData.videoUrl, newData.thumbnailUrl] = await Promise.all([
+  useEffect(() => {
+    if (
+      action === ACTION.CREATE ||
+      action === ACTION.EDIT ||
+      action === ACTION.DELETE ||
+      action === ACTION.PREVIEW
+    ) {
+      setOpen(true);
+    } else {
+      setOpen(false);
+    }
+  }, [action, courseId]);
+
+  async function transformCourseFormToDto(
+    formData: CourseFormType,
+    instructorId: string
+  ): Promise<CreateCourseRequestDto> {
+    const newData = _.cloneDeep(formData);
+
+    const [videoUrl, thumbnailUrl] = await Promise.all([
       uploadIfFile(newData.videoUrl, "video"),
       uploadIfFile(newData.thumbnailUrl, "image"),
     ]);
@@ -44,22 +85,119 @@ export const CoursesPage: React.FC<{ courses: Course[] }> = ({ courses }) => {
         })
       )
     );
-    console.timeEnd("upload all files");
-    console.log(newData);
-    setOpen(false);
+
+    return {
+      title: newData.title,
+      description: newData.description,
+      category_id: newData.category_id,
+      price: newData.price,
+      thumbnailUrl: thumbnailUrl || "",
+      videoUrl: videoUrl || "",
+      status: newData.status,
+      instructorId,
+      requirements: newData.requirements || [],
+      sessions: newData.sessions,
+    };
+  }
+
+  const handleNewCourse = async (data: CourseFormType) => {
+    try {
+      const user = localStorage.getItem("user");
+      const userObj = passStringToJson(user);
+
+      // const dataRequest = await transformCourseFormToDto(
+      //   data,
+      //   userObj?.id || 0
+      // );
+      // await courseService.createCourse(dataRequest);
+      // toast.success("Course created successfully!");
+
+      const formData = new FormData();
+      const meta = {
+        title: data.title,
+        description: data.description,
+        category_id: data.category_id,
+        price: data.price,
+        status: data.status,
+        instructorId: userObj?.id || 0,
+        requirements: data.requirements,
+        sessions: data.sessions.map((session) => ({
+          title: session.title,
+          position: session.position,
+          lessons: session.lessons.map((lession) => ({
+            title: lession.title,
+            position: lession.position,
+          })),
+        })),
+      };
+      formData.append("meta", JSON.stringify(meta));
+      formData.append("videoUrl", data.videoUrl);
+      formData.append("thumbnailUrl", data.thumbnailUrl);
+      data.sessions.forEach((session, i) => {
+        session.lessons.forEach((lesson, j) => {
+          if (lesson.video_url) {
+            formData.append(
+              `sessions[${i}][lessons][${j}][video]`,
+              lesson.video_url
+            );
+          }
+          if (lesson.doc_url) {
+            formData.append(
+              `sessions[${i}][lessons][${j}][doc]`,
+              lesson.doc_url
+            );
+          }
+        });
+      });
+      console.log("cgt");
+      await courseService.createCourse(formData);
+
+      //closeModal();
+    } catch (error) {
+      cloudService.deleteFileFromCloud(uploadedFileIds);
+      toast.error("Failed to create course. Please try again.");
+    }
+  };
+
+  const handleEditCourse = async (courseId: string) => {
+    const searchParam = new URLSearchParams(location.search);
+    searchParam.set("courseId", courseId);
+    navigate(`${location.pathname}?${searchParam.toString()}`);
+  };
+
+  const handleSubmitEditCourse = async (course: CourseEditReponse) => {
+    console.log(course);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center ">
-        <h3 className="text-2xl font-bold tracking-tight">
-          Instructor Dashboard
-        </h3>
-        <NewCourseWizard
-          onSubmit={handleNewCourse}
-          open={open}
-          setOpen={setOpen}
-        />
+        <div className="flex flex-row justify-between w-full">
+          <h3 className="text-2xl font-bold tracking-tight">
+            Instructor Dashboard
+          </h3>
+          <Button
+            size="lg"
+            className="rounded-xl"
+            onClick={() => openModal(ACTION.CREATE)}
+          >
+            + New Course
+          </Button>
+        </div>
+        {action === ACTION.CREATE && (
+          <NewCourseWizard
+            onSubmit={handleNewCourse}
+            open={open}
+            setOpen={(v) => !v && closeModal()}
+          />
+        )}
+        {action === ACTION.EDIT && (
+          <EditCourseForm
+            open={open}
+            setOpen={(v) => !v && closeModal()}
+            onSubmit={handleSubmitEditCourse}
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -70,7 +208,7 @@ export const CoursesPage: React.FC<{ courses: Course[] }> = ({ courses }) => {
           >
             <div className="h-40 w-full bg-gray-100 relative">
               <img
-                src={c.thumbnail_url || "default-course-thumbnail.jpg"}
+                src={c.thumbnailUrl || "default-course-thumbnail.jpg"}
                 alt={c.title}
                 className="h-full w-full object-cover"
               />
@@ -94,7 +232,7 @@ export const CoursesPage: React.FC<{ courses: Course[] }> = ({ courses }) => {
               </div>
 
               <div className="flex justify-between text-sm text-gray-600">
-                <span>⭐ {c.rating ? c.rating.toFixed(1) : "N/A"}</span>
+                <span>⭐ {c.avgRating ? c.avgRating.toFixed(1) : "N/A"}</span>
               </div>
 
               <div className="flex items-center justify-between">
@@ -103,7 +241,12 @@ export const CoursesPage: React.FC<{ courses: Course[] }> = ({ courses }) => {
                 </span>
 
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
-                  <Button variant="outline" size="sm" className="rounded-lg">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-lg"
+                    onClick={() => openModal(ACTION.EDIT, c.id)}
+                  >
                     <Pencil className="w-4 h-4 mr-1" />
                     Edit
                   </Button>
