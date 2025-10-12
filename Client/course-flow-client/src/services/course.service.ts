@@ -44,8 +44,17 @@ class CourseService {
 
   public getCourseForEdit(courseId: string) {
     const endpointService = EndpointService.getInstance();
-    const url = `${endpoint.course.v1.editCourse}/${courseId}`;
+    const url = `${endpoint.course.v1.getEditCourse}/${courseId}`;
     return endpointService.getEndpoint<ApiResponse<CourseEditReponse>>(url);
+  }
+
+  public editCourse(course: any) {
+    const endpointService = EndpointService.getInstance();
+    const url = `${endpoint.course.v1.editCourse}`;
+    return endpointService.putEndpoint<ApiResponse<CourseEditReponse>>(
+      url,
+      course
+    );
   }
 }
 

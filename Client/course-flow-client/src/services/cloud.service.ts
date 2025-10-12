@@ -40,16 +40,6 @@ class CloudService {
       return null;
     }
   };
-
-  deleteFileFromCloud = async (fileUrl: string[]) => {
-    try {
-      const endpointService = EndpointService.getInstance();
-      const url = endpoint.cloud.v1.deleteFile;
-      return await endpointService.postEndpoint(url, { fileUrl });
-    } catch (error) {
-      console.error("Delete file error:", error);
-    }
-  };
 }
 const cloudService = CloudService.getInstanceCloudService();
 export default cloudService;

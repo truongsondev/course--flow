@@ -150,10 +150,8 @@ export class CourseService {
       }),
     );
 
-    // Gắn presigned URL vào meta
     const updatedMeta = this.attachFilesToMeta(meta, uploadedUrls);
 
-    // Tạo course trong DB
     const course = await this.prisma.course.create({
       data: {
         title: updatedMeta.title,
@@ -195,5 +193,264 @@ export class CourseService {
     }
 
     return course;
+  }
+
+  async editCourse(meta: any, files: any): Promise<any> {
+    const uploadedUrls = await Promise.all(
+      files.map(async (file) => {
+        const objectName = await this.minioService.uploadFile(
+          'course-files',
+          file,
+        );
+
+        const url = await this.minioService.getPresignedUrl(
+          'course-files',
+          objectName,
+          3600 * 24 * 7,
+        );
+
+        return { field: file.fieldname, url };
+      }),
+    );
+    console.log(meta);
+    const updatedMeta = this.attachFilesToMeta(meta, uploadedUrls);
+
+    const existingCourse = await this.prisma.course.findUnique({
+      where: { id: meta.idCourse },
+      include: {
+        sessions: { include: { lessons: true } },
+        requirements: true,
+      },
+    });
+
+    if (!existingCourse) {
+      throw new HttpException('Course not found', 404);
+    }
+
+    await this.prisma.courseRequirement.deleteMany({
+      where: {
+        courseId: meta.idCourse,
+      },
+    });
+    await this.prisma.lesson.deleteMany({
+      where: {
+        session: { courseId: meta.idCourse },
+      },
+    });
+    await this.prisma.session.deleteMany({
+      where: { courseId: meta.idCourse },
+    });
+
+    const updatedCourse = await this.prisma.course.update({
+      where: { id: meta.idCourse },
+      data: {
+        title: updatedMeta.title,
+        description: updatedMeta.description,
+        categoryId: updatedMeta.category_id,
+        price: updatedMeta.price,
+        thumbnailUrl: updatedMeta.thumbnailUrl,
+        videoUrl: updatedMeta.videoUrl,
+        status: updatedMeta.status,
+        requirements: {
+          create: (updatedMeta.requirements ?? []).map((req) => ({
+            text: req,
+          })),
+        },
+        sessions: {
+          create: (updatedMeta.sessions ?? []).map((s) => ({
+            title: s.title,
+            position: s.position,
+            lessons: {
+              create: (s.lessons ?? []).map((l) => ({
+                title: l.title,
+                position: l.position,
+                docUrl: l.doc_url,
+                videoUrl: l.video_url,
+              })),
+            },
+          })),
+        },
+      },
+      include: {
+        category: true,
+        requirements: true,
+        sessions: { include: { lessons: true } },
+      },
+    });
+
+    return updatedCourse;
+  }
+
+  async addReview(
+    userId: string,
+    courseId: string,
+    rating: number,
+    comment?: string,
+  ) {
+    try {
+      const course = await this.prisma.course.findUnique({
+        where: { id: courseId },
+      });
+      if (!course) {
+        throw new Error('Khóa học không tồn tại!');
+      }
+
+      const enrolled = await this.prisma.enrollment.findFirst({
+        where: { userId, courseId },
+      });
+
+      if (!enrolled) {
+        throw new Error('You must enrolling before review');
+      }
+
+      const existingReview = await this.prisma.review.findFirst({
+        where: { userId, courseId },
+      });
+
+      if (existingReview) {
+        if (rating < 1 || rating > 5) {
+          throw new Error('Point must be between 1 to 5');
+        }
+
+        const updated = await this.prisma.review.update({
+          where: { id: existingReview.id },
+          data: { rating, comment, updatedAt: new Date() },
+        });
+
+        return { message: 'Review success', data: updated };
+      } else {
+        if (rating < 1) {
+          rating = 1;
+        } else if (rating > 5) {
+          rating = 5;
+        }
+
+        const review = await this.prisma.review.create({
+          data: {
+            userId,
+            courseId,
+            rating,
+            comment: comment || 'No commemt',
+          },
+        });
+
+        return { message: 'Review success', data: review };
+      }
+    } catch (error) {
+      console.error('Lỗi khi thêm đánh giá:', error);
+      throw new Error(error.message || 'Error when reviewing!');
+    }
+  }
+
+  async updateProgress(userId: string, courseId: string, lessonId: string) {
+    try {
+      const course = await this.prisma.course.findUnique({
+        where: { id: courseId },
+        include: { sessions: { include: { lessons: true } } },
+      });
+
+      if (!course) {
+        throw new Error('Khóa học không tồn tại!');
+      }
+
+      const enrollment = await this.prisma.enrollment.findFirst({
+        where: { userId, courseId },
+      });
+
+      if (!enrollment) {
+        throw new Error('Bạn chưa ghi danh khóa học này!');
+      }
+
+      const lessonFound = course.sessions
+        .flatMap((s) => s.lessons)
+        .find((l) => l.id === lessonId);
+
+      if (!lessonFound) {
+        throw new Error('Bài học không hợp lệ hoặc không thuộc khóa học!');
+      }
+
+      const totalLessons = course.sessions.reduce(
+        (sum, s) => sum + s.lessons.length,
+        0,
+      );
+
+      if (totalLessons === 0) {
+        throw new Error('Khóa học chưa có bài học nào!');
+      }
+
+      let progress = await this.prisma.courseProgress.findFirst({
+        where: { userId, courseId },
+      });
+
+      let completedLessons = 0;
+
+      if (!progress) {
+        progress = await this.prisma.courseProgress.create({
+          data: {
+            userId,
+            courseId,
+            lastLessonId: lessonId,
+            progressPercentage: 0,
+          },
+        });
+      }
+
+      if (progress.lastLessonId === lessonId) {
+        return { message: 'Bạn đã hoàn thành bài học này rồi!' };
+      } else {
+        const completed = await this.prisma.courseNote.findMany({
+          where: { userId, courseId },
+        });
+
+        completedLessons = completed.length;
+        const newProgress = ((completedLessons + 1) / totalLessons) * 100;
+
+        let progressPercentage = newProgress;
+        if (progressPercentage > 100) {
+          progressPercentage = 100;
+        } else if (progressPercentage < 0) {
+          progressPercentage = 0;
+        }
+
+        const updatedProgress = await this.prisma.courseProgress.update({
+          where: { id: progress.id },
+          data: {
+            lastLessonId: lessonId,
+            progressPercentage: progressPercentage,
+            updatedAt: new Date(),
+          },
+        });
+
+        if (progressPercentage === 100) {
+          return {
+            message: 'Chúc mừng bạn đã hoàn thành khóa học!',
+            progress: updatedProgress,
+          };
+        } else if (progressPercentage > 80) {
+          return {
+            message: 'Bạn sắp hoàn thành khóa học, cố lên!',
+            progress: updatedProgress,
+          };
+        } else if (progressPercentage > 50) {
+          return {
+            message: 'Bạn đã đi được hơn nửa chặng đường!',
+            progress: updatedProgress,
+          };
+        } else if (progressPercentage > 25) {
+          return {
+            message: 'Bạn đang tiến bộ rất tốt!',
+            progress: updatedProgress,
+          };
+        } else {
+          return {
+            message: 'Bạn vừa mới bắt đầu, tiếp tục nhé!',
+            progress: updatedProgress,
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Lỗi khi cập nhật tiến trình:', error);
+      throw new Error(error.message || 'Không thể cập nhật tiến trình!');
+    }
   }
 }

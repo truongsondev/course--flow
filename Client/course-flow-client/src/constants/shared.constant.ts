@@ -7,7 +7,8 @@ export const endpoint = {
       getUserCourses: (userId: string) => `/api/users/${userId}/courses`,
       getAllCategories: `${BASE_URL}/categories`,
       createCourse: `${BASE_URL}/create-course`,
-      editCourse: `${BASE_URL}/course-for-edit`,
+      getEditCourse: `${BASE_URL}/course-for-edit`,
+      editCourse: `${BASE_URL}/course-edit`,
     },
   },
   auth: {

@@ -4,7 +4,9 @@ import {
   Get,
   HttpCode,
   Param,
+  Patch,
   Post,
+  Put,
   UploadedFiles,
   UseInterceptors,
   UsePipes,
@@ -42,9 +44,6 @@ export class CoursesController {
   ) {
     const meta = JSON.parse(courseData.meta);
 
-    // Upload all files
-
-    // Lưu vào DB (service của bạn)
     await this.courseService.createCourse(files, meta);
 
     return { message: 'Course created' };
@@ -54,5 +53,17 @@ export class CoursesController {
   @HttpCode(200)
   getCourseForEdit(@Param('courseId') courseId: string) {
     return this.courseService.getCourseForEdit(courseId);
+  }
+
+  @Put('course-edit')
+  @HttpCode(200)
+  @UseInterceptors(AnyFilesInterceptor())
+  editCourse(
+    @Body() course: any,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    console.log(course);
+    const meta = JSON.parse(course.meta);
+    return this.courseService.editCourse(meta, files);
   }
 }

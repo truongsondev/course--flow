@@ -6,20 +6,16 @@ import {
   NewCourseWizard,
   type CourseFormType,
 } from "./form-managerment/course-form";
-import type {
-  CourseEditReponse,
-  CourseInstructorResponse,
-} from "@/dto/response/course.response.dto";
+import type { CourseInstructorResponse } from "@/dto/response/course.response.dto";
 import { passStringToJson } from "@/lib/utils";
-import instanceCloudService from "@/services/cloud.service";
 import _ from "lodash";
-import type { CreateCourseRequestDto } from "@/dto/request/course.request.dto";
 import courseService from "@/services/course.service";
 import { toast } from "sonner";
-import cloudService from "@/services/cloud.service";
-import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { ACTION } from "@/constants/action";
-import { EditCourseForm } from "./edit-course/course-form-edit";
+import {
+  EditCourseForm,
+  type CourseFormTypeEdit,
+} from "./edit-course/course-form-edit";
 import { useCourseModals } from "@/hooks/useCourseModals";
 type Course = CourseInstructorResponse;
 const statusColors: Record<Course["status"], string> = {
@@ -32,26 +28,8 @@ export const CoursesPage: React.FC<{ courses: CourseInstructorResponse[] }> = ({
   courses,
 }) => {
   const [open, setOpen] = useState(false);
-  const uploadedFileIds: string[] = [];
-  const navigate = useNavigate();
-  const location = useLocation();
+
   const { action, courseId, openModal, closeModal } = useCourseModals();
-  const uploadIfFile = async (
-    value: string | File | undefined,
-    typeFile: string
-  ) => {
-    if (value instanceof File) {
-      const uploaded = await instanceCloudService.uploadFileToCloud(
-        value,
-        typeFile
-      );
-      if (uploaded && uploaded.fileId) {
-        uploadedFileIds.push(uploaded.fileId);
-      }
-      return uploaded?.url ?? "";
-    }
-    return value ?? "";
-  };
 
   useEffect(() => {
     if (
@@ -66,107 +44,71 @@ export const CoursesPage: React.FC<{ courses: CourseInstructorResponse[] }> = ({
     }
   }, [action, courseId]);
 
-  async function transformCourseFormToDto(
-    formData: CourseFormType,
-    instructorId: string
-  ): Promise<CreateCourseRequestDto> {
-    const newData = _.cloneDeep(formData);
+  const initFormData = (data: CourseFormTypeEdit | CourseFormType) => {
+    const user = localStorage.getItem("user");
+    const userObj = passStringToJson(user);
 
-    const [videoUrl, thumbnailUrl] = await Promise.all([
-      uploadIfFile(newData.videoUrl, "video"),
-      uploadIfFile(newData.thumbnailUrl, "image"),
-    ]);
-
-    await Promise.all(
-      newData.sessions.flatMap((session) =>
-        session.lessons.map(async (lesson) => {
-          lesson.video_url = await uploadIfFile(lesson.video_url, "video");
-          lesson.doc_url = await uploadIfFile(lesson.doc_url, "document");
-        })
-      )
-    );
-
-    return {
-      title: newData.title,
-      description: newData.description,
-      category_id: newData.category_id,
-      price: newData.price,
-      thumbnailUrl: thumbnailUrl || "",
-      videoUrl: videoUrl || "",
-      status: newData.status,
-      instructorId,
-      requirements: newData.requirements || [],
-      sessions: newData.sessions,
+    const formData = new FormData();
+    const meta = {
+      idCourse: (data as CourseFormTypeEdit).id || "0",
+      title: data.title,
+      description: data.description,
+      category_id: data.category_id,
+      price: data.price,
+      status: data.status,
+      instructorId: userObj?.id || 0,
+      requirements: data.requirements,
+      sessions: data.sessions.map((session) => ({
+        title: session.title,
+        position: session.position,
+        lessons: session.lessons.map((lession) => ({
+          title: lession.title,
+          position: lession.position,
+        })),
+      })),
     };
-  }
+    formData.append("meta", JSON.stringify(meta));
+    formData.append("videoUrl", data.videoUrl);
+    formData.append("thumbnailUrl", data.thumbnailUrl);
+    data.sessions.forEach((session, i) => {
+      session.lessons.forEach((lesson, j) => {
+        if (lesson.video_url) {
+          formData.append(
+            `sessions[${i}][lessons][${j}][video]`,
+            lesson.video_url
+          );
+        }
+        if (lesson.doc_url) {
+          formData.append(`sessions[${i}][lessons][${j}][doc]`, lesson.doc_url);
+        }
+      });
+    });
+
+    return formData;
+  };
 
   const handleNewCourse = async (data: CourseFormType) => {
     try {
-      const user = localStorage.getItem("user");
-      const userObj = passStringToJson(user);
-
-      // const dataRequest = await transformCourseFormToDto(
-      //   data,
-      //   userObj?.id || 0
-      // );
-      // await courseService.createCourse(dataRequest);
-      // toast.success("Course created successfully!");
-
-      const formData = new FormData();
-      const meta = {
-        title: data.title,
-        description: data.description,
-        category_id: data.category_id,
-        price: data.price,
-        status: data.status,
-        instructorId: userObj?.id || 0,
-        requirements: data.requirements,
-        sessions: data.sessions.map((session) => ({
-          title: session.title,
-          position: session.position,
-          lessons: session.lessons.map((lession) => ({
-            title: lession.title,
-            position: lession.position,
-          })),
-        })),
-      };
-      formData.append("meta", JSON.stringify(meta));
-      formData.append("videoUrl", data.videoUrl);
-      formData.append("thumbnailUrl", data.thumbnailUrl);
-      data.sessions.forEach((session, i) => {
-        session.lessons.forEach((lesson, j) => {
-          if (lesson.video_url) {
-            formData.append(
-              `sessions[${i}][lessons][${j}][video]`,
-              lesson.video_url
-            );
-          }
-          if (lesson.doc_url) {
-            formData.append(
-              `sessions[${i}][lessons][${j}][doc]`,
-              lesson.doc_url
-            );
-          }
-        });
-      });
-      console.log("cgt");
+      const formData = initFormData(data);
       await courseService.createCourse(formData);
-
-      //closeModal();
+      closeModal();
     } catch (error) {
-      cloudService.deleteFileFromCloud(uploadedFileIds);
       toast.error("Failed to create course. Please try again.");
     }
   };
 
-  const handleEditCourse = async (courseId: string) => {
-    const searchParam = new URLSearchParams(location.search);
-    searchParam.set("courseId", courseId);
-    navigate(`${location.pathname}?${searchParam.toString()}`);
-  };
+  const handleSubmitEditCourse = async (course: CourseFormTypeEdit) => {
+    try {
+      const formData = initFormData(course);
 
-  const handleSubmitEditCourse = async (course: CourseEditReponse) => {
-    console.log(course);
+      await courseService.editCourse(formData);
+      toast.success("Edit course success");
+      closeModal();
+    } catch (err) {
+      console.log(err);
+      toast("Failed to edit course. Please try again.");
+    }
+    console.log("course edit:::", course);
   };
 
   return (

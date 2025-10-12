@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { BookOpen, Image, Layers, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -15,11 +14,8 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { Form } from "@/components/ui/form";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useParams, useSearchParams } from "react-router";
-import type {
-  CategoriesResponse,
-  CourseEditReponse,
-} from "@/dto/response/course.response.dto";
+import { useSearchParams } from "react-router";
+import type { CategoriesResponse } from "@/dto/response/course.response.dto";
 import courseService from "@/services/course.service";
 
 import { createObjectURL } from "@/lib/utils";
@@ -71,13 +67,12 @@ export type LessonFileType = "doc_url" | "video_url";
 export const EditCourseForm: React.FC<{
   open: boolean | undefined;
   setOpen: (open: boolean | undefined) => void;
-  onSubmit: (data: CourseEditReponse) => void;
+  onSubmit: (data: CourseFormTypeEdit) => Promise<void>;
 }> = ({ onSubmit, open, setOpen }) => {
   const [step, setStep] = useState(1);
   const [categories, setCategories] = useState<CategoriesResponse[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [course, setCourse] = useState<CourseEditReponse | null>(null);
   const [searchParams] = useSearchParams();
   const courseId = searchParams.get("courseId");
   // react-hook-form init
@@ -123,13 +118,12 @@ export const EditCourseForm: React.FC<{
           ...courseData,
           category_id: courseData.category.id,
         });
-        setCourse(courseData);
       } catch (e) {
         toast.error("Failed to load course data");
       }
     };
     fetchCategories();
-    Promise.all([fetchCourse(), fetchCategories()]).catch((e) => {
+    Promise.all([fetchCourse(), fetchCategories()]).catch(() => {
       toast.error("Failed to load data");
     });
   }, []);
@@ -160,7 +154,7 @@ export const EditCourseForm: React.FC<{
 
   const handleFormSubmit = async (value: CourseFormTypeEdit) => {
     setIsSubmitting(true);
-    //await onSubmit(value);
+    await onSubmit(value);
     setIsSubmitting(false);
   };
 
@@ -232,15 +226,6 @@ export const EditCourseForm: React.FC<{
                       >
                         <CourseReviewEditStep formCourse={formCourse} />
                         <div className="flex justify-between mt-4 pt-4 border-t">
-                          <Button
-                            variant="outline"
-                            type="button"
-                            className="rounded-xl px-6"
-                            onClick={() => setStep(step - 1)}
-                          >
-                            Back
-                          </Button>
-
                           <Button
                             type="submit"
                             className="rounded-xl px-6 bg-indigo-500 text-white flex items-center gap-2"
