@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { CourseReview } from 'src/dto/request/course/course.review.dto';
 
 @Controller()
 export class CoursesController {
@@ -65,5 +66,12 @@ export class CoursesController {
     console.log(course);
     const meta = JSON.parse(course.meta);
     return this.courseService.editCourse(meta, files);
+  }
+
+  @Post('review-course')
+  @HttpCode(200)
+  reviewCourse(@Body() reviewInfor: CourseReview) {
+    const { courseId, userId, rating, comment } = { ...reviewInfor };
+    return this.courseService.addReview(userId, courseId, rating, comment);
   }
 }

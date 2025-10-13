@@ -292,7 +292,7 @@ export class CourseService {
         where: { id: courseId },
       });
       if (!course) {
-        throw new Error('Khóa học không tồn tại!');
+        throw new Error('Course not found!');
       }
 
       const enrolled = await this.prisma.enrollment.findFirst({
@@ -330,7 +330,7 @@ export class CourseService {
             userId,
             courseId,
             rating,
-            comment: comment || 'No commemt',
+            comment: comment,
           },
         });
 
@@ -350,7 +350,7 @@ export class CourseService {
       });
 
       if (!course) {
-        throw new Error('Khóa học không tồn tại!');
+        throw new Error('Course not found!');
       }
 
       const enrollment = await this.prisma.enrollment.findFirst({
@@ -358,7 +358,7 @@ export class CourseService {
       });
 
       if (!enrollment) {
-        throw new Error('Bạn chưa ghi danh khóa học này!');
+        throw new Error('You must enroll before tracking progress!');
       }
 
       const lessonFound = course.sessions
@@ -366,7 +366,7 @@ export class CourseService {
         .find((l) => l.id === lessonId);
 
       if (!lessonFound) {
-        throw new Error('Bài học không hợp lệ hoặc không thuộc khóa học!');
+        throw new Error('Invalid lesson or it does not belong to this course!');
       }
 
       const totalLessons = course.sessions.reduce(
@@ -375,7 +375,7 @@ export class CourseService {
       );
 
       if (totalLessons === 0) {
-        throw new Error('Khóa học chưa có bài học nào!');
+        throw new Error('This course does not have any lessons yet!');
       }
 
       let progress = await this.prisma.courseProgress.findFirst({
@@ -396,7 +396,7 @@ export class CourseService {
       }
 
       if (progress.lastLessonId === lessonId) {
-        return { message: 'Bạn đã hoàn thành bài học này rồi!' };
+        return { message: 'You have already completed this lesson!' };
       } else {
         const completed = await this.prisma.courseNote.findMany({
           where: { userId, courseId },
@@ -423,34 +423,34 @@ export class CourseService {
 
         if (progressPercentage === 100) {
           return {
-            message: 'Chúc mừng bạn đã hoàn thành khóa học!',
+            message: 'Congratulations! You have completed the course!',
             progress: updatedProgress,
           };
         } else if (progressPercentage > 80) {
           return {
-            message: 'Bạn sắp hoàn thành khóa học, cố lên!',
+            message: 'Almost there! Keep going, you are close to finishing!',
             progress: updatedProgress,
           };
         } else if (progressPercentage > 50) {
           return {
-            message: 'Bạn đã đi được hơn nửa chặng đường!',
+            message: 'You are more than halfway through the course!',
             progress: updatedProgress,
           };
         } else if (progressPercentage > 25) {
           return {
-            message: 'Bạn đang tiến bộ rất tốt!',
+            message: 'Good job! You are making great progress!',
             progress: updatedProgress,
           };
         } else {
           return {
-            message: 'Bạn vừa mới bắt đầu, tiếp tục nhé!',
+            message: 'You just got started, keep learning!',
             progress: updatedProgress,
           };
         }
       }
     } catch (error) {
-      console.error('Lỗi khi cập nhật tiến trình:', error);
-      throw new Error(error.message || 'Không thể cập nhật tiến trình!');
+      console.error('Error while updating progress:', error);
+      throw new Error(error.message || 'Failed to update progress!');
     }
   }
 }
