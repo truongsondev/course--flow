@@ -1,6 +1,5 @@
 import { HttpException, Inject } from '@nestjs/common';
 import { PrismaClient } from 'generated/prisma';
-import { CreateCourseDto } from 'src/dto/request/course/course.request.dto';
 import { CourseEditResponse } from 'src/dto/response/course-edit-response';
 import { MinioService } from 'src/minio/minio.service';
 export class CourseService {
@@ -452,5 +451,88 @@ export class CourseService {
       console.error('Error while updating progress:', error);
       throw new Error(error.message || 'Failed to update progress!');
     }
+  }
+
+  async createNote({ userId, courseId, note }) {
+    if (!userId || !courseId || !note?.trim()) {
+      return { success: false, message: 'Missing userId, courseId or note.' };
+    }
+
+    const cleanNote = note.trim();
+
+    if (cleanNote.length < 3) {
+      return {
+        success: false,
+        message: 'Note is too short. Please write at least 3 characters.',
+      };
+    }
+    if (cleanNote.length > 1000) {
+      return {
+        success: false,
+        message: 'Note is too long. Max length: 1000 characters.',
+      };
+    }
+
+    const [user, course] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: userId } }),
+      this.prisma.course.findUnique({ where: { id: courseId } }),
+    ]);
+    if (!user) return { success: false, message: 'User not found.' };
+    if (!course) return { success: false, message: 'Course not found.' };
+
+    if (course.status === 'draft') {
+      return {
+        success: false,
+        message: 'This course is not yet published, you cannot add notes.',
+      };
+    }
+
+    const enrollment = await this.prisma.enrollment.findFirst({
+      where: { userId, courseId },
+    });
+    if (!enrollment) {
+      return {
+        success: false,
+        message: 'You are not enrolled in this course.',
+      };
+    }
+
+    const duplicate = await this.prisma.courseNote.findFirst({
+      where: {
+        userId,
+        courseId,
+        note: cleanNote,
+      },
+    });
+    if (duplicate) {
+      return { success: false, message: 'You already added a similar note.' };
+    }
+
+    const newNote = await this.prisma.courseNote.create({
+      data: {
+        userId,
+        courseId,
+        note: cleanNote,
+      },
+    });
+
+    await this.prisma
+      .$executeRawUnsafe(
+        `
+    INSERT INTO note_audit_logs (user_id, course_id, action, created_at)
+    VALUES ('${userId}', '${courseId}', 'create_note', NOW())
+  `,
+      )
+      .catch(() => {});
+
+    return {
+      success: true,
+      message: 'Note created successfully.',
+      data: {
+        ...newNote,
+        user: { id: user.id, full_name: user.full_name },
+        course: { id: course.id, title: course.title },
+      },
+    };
   }
 }
