@@ -17,6 +17,7 @@ import {
   type CourseFormTypeEdit,
 } from "./edit-course/course-form-edit";
 import { useCourseModals } from "@/hooks/useCourseModals";
+import { getVideoDuration } from "@/components/utils/util";
 type Course = CourseInstructorResponse;
 const statusColors: Record<Course["status"], string> = {
   published: "bg-green-100 text-green-700",
@@ -44,10 +45,9 @@ export const CoursesPage: React.FC<{ courses: CourseInstructorResponse[] }> = ({
     }
   }, [action, courseId]);
 
-  const initFormData = (data: CourseFormTypeEdit | CourseFormType) => {
+  const initFormData = async (data: CourseFormTypeEdit | CourseFormType) => {
     const user = localStorage.getItem("user");
     const userObj = passStringToJson(user);
-
     const formData = new FormData();
     const meta = {
       idCourse: (data as CourseFormTypeEdit).id || "0",
@@ -61,35 +61,50 @@ export const CoursesPage: React.FC<{ courses: CourseInstructorResponse[] }> = ({
       sessions: data.sessions.map((session) => ({
         title: session.title,
         position: session.position,
-        lessons: session.lessons.map((lession) => ({
-          title: lession.title,
-          position: lession.position,
+        lessons: session.lessons.map((lesson) => ({
+          title: lesson.title,
+          position: lesson.position,
+          duration: 0,
         })),
       })),
     };
-    formData.append("meta", JSON.stringify(meta));
-    formData.append("videoUrl", data.videoUrl);
-    formData.append("thumbnailUrl", data.thumbnailUrl);
-    data.sessions.forEach((session, i) => {
-      session.lessons.forEach((lesson, j) => {
+
+    for (let i = 0; i < data.sessions.length; i++) {
+      const session = data.sessions[i];
+      for (let j = 0; j < session.lessons.length; j++) {
+        const lesson = session.lessons[j];
+
         if (lesson.video_url) {
+          const durationLesson = await getVideoDuration(lesson.video_url);
+          console.log("durationLesson:::", durationLesson);
+
+          meta.sessions[i].lessons[j].duration = durationLesson;
+
+          // append file/video
           formData.append(
             `sessions[${i}][lessons][${j}][video]`,
             lesson.video_url
           );
         }
+
         if (lesson.doc_url) {
           formData.append(`sessions[${i}][lessons][${j}][doc]`, lesson.doc_url);
         }
-      });
-    });
+      }
+    }
+
+    // Cuối cùng mới tạo FormData sau khi meta đã được cập nhật
+
+    formData.append("meta", JSON.stringify(meta));
+    formData.append("videoUrl", data.videoUrl);
+    formData.append("thumbnailUrl", data.thumbnailUrl);
 
     return formData;
   };
 
   const handleNewCourse = async (data: CourseFormType) => {
     try {
-      const formData = initFormData(data);
+      const formData = await initFormData(data);
       await courseService.createCourse(formData);
       closeModal();
     } catch (error) {
@@ -99,8 +114,7 @@ export const CoursesPage: React.FC<{ courses: CourseInstructorResponse[] }> = ({
 
   const handleSubmitEditCourse = async (course: CourseFormTypeEdit) => {
     try {
-      const formData = initFormData(course);
-
+      const formData = await initFormData(course);
       await courseService.editCourse(formData);
       toast.success("Edit course success");
       closeModal();

@@ -133,6 +133,7 @@ model Lesson {
   videoUrl   String?  @db.Text 
   docUrl     String?  @db.Text 
   position  Int
+  duration  Int?     @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

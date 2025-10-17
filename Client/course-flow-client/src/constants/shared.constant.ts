@@ -3,12 +3,14 @@ export const endpoint = {
   course: {
     v1: {
       getAll: `${BASE_URL}/courses`,
+      getCourseForHome: `${BASE_URL}/course/home`,
       getById: (id: string) => `/api/courses/${id}`,
       getUserCourses: (userId: string) => `/api/users/${userId}/courses`,
       getAllCategories: `${BASE_URL}/categories`,
       createCourse: `${BASE_URL}/create-course`,
       getEditCourse: `${BASE_URL}/course-for-edit`,
       editCourse: `${BASE_URL}/course-edit`,
+      getCourseForDetail: `${BASE_URL}/course-detail`,
     },
   },
   auth: {

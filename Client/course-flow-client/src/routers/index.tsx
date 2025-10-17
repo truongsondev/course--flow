@@ -12,6 +12,7 @@ import LayoutAdmin from "@/components/layout/admin/index.tsx";
 import CourseDetail from "@/pages/main/course-detail";
 import InstructorDashboard from "@/pages/instructor/instructor";
 import NotFoundPage from "@/pages/main/not_found";
+import CheckoutPagePro from "@/pages/main/payment";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -65,6 +66,10 @@ const router = createBrowserRouter([
   {
     path: "/instructor",
     element: <InstructorDashboard />,
+  },
+  {
+    path: "/payment",
+    element: <CheckoutPagePro />,
   },
   {
     path: "*",

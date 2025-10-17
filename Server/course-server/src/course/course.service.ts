@@ -7,40 +7,119 @@ export class CourseService {
     @Inject('PRISMA_CLIENT') private readonly prisma: PrismaClient,
     private readonly minioService: MinioService,
   ) {}
-  async getAllCourses() {
+  async getAllCourses(limit: number) {
     try {
-      const courses = await this.prisma.$queryRaw<any[]>`
-        SELECT 
-          c.id,
-          c.title,
-          c.price,
-          c.videoUrl,
-          c.thumbnailUrl,
-          c.status,
-          c.createdAt,
-          CAST(COUNT(DISTINCT e.id) AS SIGNED INT) AS students,
-          COALESCE(AVG(r.rating), 0) AS avgRating
-        FROM courses c
-        JOIN users u ON u.id = c.instructorId
-        LEFT JOIN enrollments e ON e.courseId = c.id
-        LEFT JOIN reviews r ON r.courseId = c.id
-        GROUP BY c.id
-        ORDER BY c.id;
-      `;
-      if (!courses) {
+      const safeLimit = Number(limit) || 0;
+
+      const courses = await this.prisma.$queryRawUnsafe<any[]>(`
+      SELECT 
+        c.id,
+        c.title,
+        c.price,
+        c.thumbnailUrl,
+        c.status,
+        cr.name AS category,
+        COUNT(DISTINCT e.id) AS students,
+        COALESCE(AVG(r.rating), 0) AS avgRating
+      FROM courses c
+      JOIN users u ON u.id = c.instructorId
+      LEFT JOIN categories cr ON cr.id = c.categoryId
+      LEFT JOIN enrollments e ON e.courseId = c.id
+      LEFT JOIN reviews r ON r.courseId = c.id
+      GROUP BY c.id
+      ORDER BY c.id
+      ${safeLimit > 0 ? `LIMIT ${safeLimit}` : ''};
+    `);
+
+      if (!courses || courses.length === 0) {
         throw new HttpException('No courses found', 404);
       }
 
-      const formatted = courses.map((c: any) => ({
+      return courses.map((c: any) => ({
         ...c,
         students: Number(c.students),
         avgRating: Number(c.avgRating) === 0 ? 5 : Number(c.avgRating),
       }));
-      return formatted;
     } catch (error) {
-      console.log('error::::', error);
+      console.error('error::::', error);
       throw new HttpException('Failed to fetch courses', 500);
     }
+  }
+
+  async getCourseDetail(courseId: string) {
+    const course = await this.prisma.course.findUnique({
+      where: { id: courseId },
+      include: {
+        instructor: {
+          select: { id: true, full_name: true, email: true },
+        },
+        reviews: { select: { rating: true } },
+        requirements: {
+          select: { text: true },
+        },
+        enrollments: {
+          select: { id: true },
+        },
+        sessions: {
+          include: {
+            lessons: {
+              select: {
+                id: true,
+                title: true,
+                duration: true,
+                videoUrl: true,
+                docUrl: true,
+                position: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!course) return null;
+
+    const studentCount = course.enrollments.length;
+
+    const totalDuration = course.sessions.reduce((acc, session) => {
+      const lessonSum = session.lessons.reduce(
+        (sum, lesson) => sum + (lesson.duration || 0),
+        0,
+      );
+      return acc + lessonSum;
+    }, 0);
+
+    const avgRating =
+      course.reviews.length > 0
+        ? course.reviews.reduce((sum, r) => sum + r.rating, 0) /
+          course.reviews.length
+        : 0;
+
+    return {
+      id: course.id,
+      title: course.title,
+      description: course.description,
+      instructorName: course.instructor.full_name,
+      thumbnailUrl: course.thumbnailUrl,
+      videoUrl: course.videoUrl,
+      price: course.price,
+      requirements: course.requirements.map((r) => r.text),
+      studentCount,
+      totalDuration,
+      avgRating: Number(avgRating.toFixed(1)),
+      sessions: course.sessions.map((s) => ({
+        id: s.id,
+        title: s.title,
+        position: s.position,
+        lessons: s.lessons.map((l) => ({
+          id: l.id,
+          title: l.title,
+          duration: l.duration,
+          videoUrl: l.videoUrl,
+          docUrl: l.docUrl,
+        })),
+      })),
+    };
   }
 
   async getAllCategories() {
@@ -176,6 +255,7 @@ export class CourseService {
                 position: l.position,
                 docUrl: l.doc_url,
                 videoUrl: l.video_url,
+                duration: l.duration,
               })),
             },
           })),
@@ -211,7 +291,6 @@ export class CourseService {
         return { field: file.fieldname, url };
       }),
     );
-    console.log(meta);
     const updatedMeta = this.attachFilesToMeta(meta, uploadedUrls);
 
     const existingCourse = await this.prisma.course.findUnique({
@@ -534,5 +613,98 @@ export class CourseService {
         course: { id: course.id, title: course.title },
       },
     };
+  }
+
+  async getCourseStatistics() {
+    try {
+      const courses = await this.prisma.course.findMany({
+        include: {
+          enrollments: true,
+          instructor: { select: { full_name: true, email: true } },
+        },
+      });
+
+      if (!courses || courses.length === 0) {
+        return {
+          message: 'No course in system.',
+          totalCourses: 0,
+          totalRevenue: 0,
+          data: [],
+        };
+      }
+
+      const data: {
+        id: string;
+        title: string;
+        instructor: string;
+        price: number;
+        studentCount: number;
+        revenue: number;
+        status: string;
+        createdAt: Date;
+      }[] = [];
+
+      let totalRevenue = 0;
+
+      for (const course of courses) {
+        let studentCount = 0;
+        let revenue = 0;
+
+        if (course.enrollments && course.enrollments.length > 0) {
+          studentCount = course.enrollments.length;
+
+          if (course.price && course.price > 0) {
+            revenue = course.price * studentCount;
+          } else {
+            revenue = 0;
+          }
+        } else {
+          studentCount = 0;
+          revenue = 0;
+        }
+
+        if (course.status === 'draft') {
+          continue;
+        }
+
+        totalRevenue += revenue;
+
+        data.push({
+          id: course.id,
+          title: course.title,
+          instructor: course.instructor?.full_name ?? 'Chưa cập nhật',
+          price: course.price,
+          studentCount,
+          revenue,
+          status: course.status,
+          createdAt: course.createdAt,
+        });
+      }
+
+      if (data.length === 0) {
+        return {
+          message: 'All course is draf state.',
+          totalCourses: 0,
+          totalRevenue: 0,
+          data: [],
+        };
+      }
+
+      return {
+        totalCourses: data.length,
+        totalRevenue,
+        data,
+      };
+    } catch (error) {
+      console.error('[CourseStatisticsService] error:', error);
+
+      if (error.code === 'P1001') {
+        throw new Error('No connect to database.');
+      } else if (error.code === 'P2002') {
+        throw new Error('duplicate or error unique key.');
+      } else {
+        throw new Error('External server.');
+      }
+    }
   }
 }

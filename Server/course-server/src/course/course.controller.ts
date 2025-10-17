@@ -20,16 +20,6 @@ import { CourseReview } from 'src/dto/request/course/course.review.dto';
 export class CoursesController {
   constructor(private readonly courseService: CourseService) {}
 
-  @Get('courses')
-  @HttpCode(200)
-  getAllCourses() {
-    try {
-      return this.courseService.getAllCourses();
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
   @Get('categories')
   @HttpCode(200)
   getAllCategories() {
@@ -54,6 +44,28 @@ export class CoursesController {
   @HttpCode(200)
   getCourseForEdit(@Param('courseId') courseId: string) {
     return this.courseService.getCourseForEdit(courseId);
+  }
+
+  @Get('courses')
+  @HttpCode(200)
+  getAllCourses() {
+    try {
+      return this.courseService.getAllCourses(0);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @Get('course/home/:limit')
+  @HttpCode(200)
+  getCourseForHome(@Param('limit') limit: number) {
+    return this.courseService.getAllCourses(limit);
+  }
+
+  @Get('course-detail/:courseId')
+  @HttpCode(200)
+  getCourseForDetail(@Param('courseId') courseId: string) {
+    return this.courseService.getCourseDetail(courseId);
   }
 
   @Put('course-edit')

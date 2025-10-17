@@ -1,17 +1,14 @@
 import type { sessionDTO } from "../request/session.request.dto";
 
 export interface CourseHomeResponse {
-  course_id: number;
+  id: number;
   title: string;
-  description: string;
-  thumbnail_url: string;
+  thumbnailUrl: string;
   price: number;
-  level: string;
+  status: string;
   category: string;
-  created_at: Date;
-  updated_at: Date;
-  avg_rating: number;
-  tags: string[];
+  avgRating: number;
+  students: number;
 }
 
 export interface CourseInstructorResponse {
@@ -45,4 +42,34 @@ export interface CourseEditReponse {
 export interface CategoriesResponse {
   id: string;
   name: string;
+}
+
+export interface LessonDetail {
+  id: string;
+  title: string;
+  duration: number;
+  videoUrl?: string;
+  docUrl?: string;
+}
+
+export interface SessionDetail {
+  id: string;
+  title: string;
+  position: number;
+  lessons: LessonDetail[];
+}
+
+export interface CourseDetailResponse {
+  id: string;
+  title: string;
+  description: string;
+  instructorName: string;
+  thumbnailUrl: string;
+  videoUrl: string;
+  price: number;
+  requirements: string[];
+  avgRating: number;
+  studentCount: number;
+  totalDuration: number;
+  sessions: SessionDetail[];
 }

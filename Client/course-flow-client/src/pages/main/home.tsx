@@ -1,4 +1,4 @@
-import { type JSX } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { motion } from "framer-motion";
 import CategoryPage from "@/components/pages/category";
 
@@ -13,74 +13,20 @@ type Course = {
   tags: string[];
 };
 
-import type { CourseHomeResponse } from "@/dto/response/course.response.dto";
 import Course from "@/components/pages/course";
-
-export const sampleCourses: CourseHomeResponse[] = [
-  {
-    course_id: 1,
-    title: "Fullstack React & Node: From Zero to Production",
-    description:
-      "Học cách xây dựng ứng dụng fullstack với React, Node.js và triển khai lên production.",
-    thumbnail_url: "https://picsum.photos/seed/course1/600/400",
-    price: 59,
-    level: "Intermediate",
-    category: "Development",
-    created_at: new Date("2024-01-10"),
-    updated_at: new Date("2024-02-15"),
-    avg_rating: 4.8,
-    tags: ["React", "Node", "Fullstack"],
-  },
-  {
-    course_id: 2,
-    title: "UI/UX Design Bootcamp: Figma to Prototype",
-    description:
-      "Thực hành thiết kế UI/UX với Figma và xây dựng prototype hoàn chỉnh.",
-    thumbnail_url: "https://picsum.photos/seed/course2/600/400",
-    price: 39,
-    level: "Beginner",
-    category: "Development",
-
-    created_at: new Date("2024-03-05"),
-    updated_at: new Date("2024-03-10"),
-
-    avg_rating: 4.7,
-    tags: ["Design", "Figma"], // 👈
-  },
-  {
-    course_id: 3,
-    title: "Data Structures & Algorithms in TypeScript",
-    description:
-      "Nắm vững cấu trúc dữ liệu và thuật toán với TypeScript thông qua ví dụ thực tế.",
-    thumbnail_url: "https://picsum.photos/seed/course3/600/400",
-    price: 49,
-    level: "Advanced",
-    category: "Development",
-
-    created_at: new Date("2024-04-01"),
-    updated_at: new Date("2024-04-12"),
-
-    avg_rating: 4.9,
-    tags: ["Algorithms", "TypeScript"], // 👈
-  },
-  {
-    course_id: 4,
-    title: "DevOps Essentials: Docker & Kubernetes",
-    description: "Khóa học DevOps cơ bản giúp bạn làm chủ Docker & Kubernetes.",
-    thumbnail_url: "https://picsum.photos/seed/course4/600/400",
-    price: 45,
-    level: "Intermediate",
-    category: "Development",
-
-    created_at: new Date("2024-05-20"),
-    updated_at: new Date("2024-06-01"),
-
-    avg_rating: 4.6,
-    tags: ["DevOps", "Docker", "Kubernetes"], // 👈
-  },
-];
+import type { CourseHomeResponse } from "@/dto/response/course.response.dto";
+import courseService from "@/services/course.service";
 
 export default function HomePage(): JSX.Element {
+  const [courses, setCourses] = useState<CourseHomeResponse[]>([]);
+  useEffect(() => {
+    const fetchCourse = async () => {
+      const res = await courseService.getCourseForHome(4);
+      setCourses(res.data.data);
+    };
+    fetchCourse();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900">
       <section className="relative overflow-hidden">
@@ -179,14 +125,17 @@ export default function HomePage(): JSX.Element {
 
       <section id="courses" className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-semibold">Khóa học nổi bật</h3>
-          <div className="text-sm text-slate-600">Xem tất cả</div>
+          <h3 className="text-2xl font-semibold">Outstanding courses</h3>
         </div>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {sampleCourses.map((course) => (
-            <Course course={course} />
-          ))}
+          {courses &&
+            courses.length > 0 &&
+            courses.map((course) => <Course course={course} />)}
+          {!courses ||
+            (courses.length <= 0 && (
+              <div className="">No course for this time</div>
+            ))}
         </div>
       </section>
 

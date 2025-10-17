@@ -3,7 +3,9 @@ import { endpoint } from "../constants/shared.constant";
 import { EndpointService } from "./endpoint.service";
 import type {
   CategoriesResponse,
+  CourseDetailResponse,
   CourseEditReponse,
+  CourseHomeResponse,
   CourseInstructorResponse,
 } from "@/dto/response/course.response.dto";
 class CourseService {
@@ -25,6 +27,22 @@ class CourseService {
     return endpointService.getEndpoint<ApiResponse<CourseInstructorResponse[]>>(
       url
     );
+  }
+
+  public getCourseForHome(limit: number) {
+    const endpointService = EndpointService.getInstance();
+    const url = endpoint.course.v1.getCourseForHome + "/" + limit;
+
+    return endpointService.getEndpoint<ApiResponse<CourseHomeResponse[]>>(url);
+  }
+
+  public getCourseForDetail(courseId: string) {
+    const endpointService = EndpointService.getInstance();
+    const url = endpoint.course.v1.getCourseForDetail + "/" + courseId;
+
+    return endpointService.getEndpoint<
+      ApiResponse<CourseDetailResponse | null>
+    >(url);
   }
 
   public getAllCategories() {
