@@ -7,6 +7,7 @@ import type {
   CourseEditReponse,
   CourseHomeResponse,
   CourseInstructorResponse,
+  CourseWatchResponse,
 } from "@/dto/response/course.response.dto";
 class CourseService {
   private static instance: CourseService;
@@ -36,13 +37,24 @@ class CourseService {
     return endpointService.getEndpoint<ApiResponse<CourseHomeResponse[]>>(url);
   }
 
-  public getCourseForDetail(courseId: string) {
+  public getCourseForDetail(courseId: string, userId: string) {
     const endpointService = EndpointService.getInstance();
-    const url = endpoint.course.v1.getCourseForDetail + "/" + courseId;
+    const url =
+      endpoint.course.v1.getCourseForDetail + "/" + courseId + "/" + userId;
 
     return endpointService.getEndpoint<
       ApiResponse<CourseDetailResponse | null>
     >(url);
+  }
+
+  public getCourseForWatch(courseId: string, userId: string) {
+    const endpointService = EndpointService.getInstance();
+    const url =
+      endpoint.course.v1.getCourseForWatch + "/" + courseId + "/" + userId;
+
+    return endpointService.getEndpoint<ApiResponse<CourseWatchResponse | null>>(
+      url
+    );
   }
 
   public getAllCategories() {

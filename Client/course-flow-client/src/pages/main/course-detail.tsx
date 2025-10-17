@@ -8,13 +8,21 @@ import type {
 } from "@/dto/response/course.response.dto";
 import { useParams } from "react-router";
 import courseService from "@/services/course.service";
+import { passStringToJson } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function CourseDetail() {
   const { id } = useParams<{ id: string }>();
   const [course, setCourse] = useState<CourseDetailResponse | null>(null);
   useEffect(() => {
+    const user = localStorage.getItem("user");
+    const userObj = passStringToJson(user);
+    if (!userObj) {
+      toast.error("User data is invalid or missing. Please sign in again.");
+      return;
+    }
     const fetchCourse = async () => {
-      const res = await courseService.getCourseForDetail(id || "");
+      const res = await courseService.getCourseForDetail(id || "", userObj.id);
       setCourse(res.data.data);
     };
     fetchCourse();
@@ -96,9 +104,16 @@ export default function CourseDetail() {
             ${course?.price || 0}
           </div>
 
-          <button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold shadow hover:from-blue-700 hover:to-indigo-700 transition">
-            Enroll Now
-          </button>
+          {!course?.isEnrolled && (
+            <button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold shadow hover:from-blue-700 hover:to-indigo-700 transition">
+              Enroll Now
+            </button>
+          )}
+          {course?.isEnrolled && (
+            <button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold shadow hover:from-blue-700 hover:to-indigo-700 transition">
+              Learn now
+            </button>
+          )}
 
           <ul className="text-sm text-gray-600 space-y-2">
             <li>✅ Lifetime access</li>

@@ -114,6 +114,7 @@ export const EditCourseForm: React.FC<{
       try {
         const res = await courseService.getCourseForEdit(courseId || "");
         const courseData = res.data.data;
+        console.log(courseData);
         formCourse.reset({
           ...courseData,
           category_id: courseData.category.id,

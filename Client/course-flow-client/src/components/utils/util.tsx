@@ -31,3 +31,15 @@ export function formatDuration(seconds: number): string {
     return [m, s].map((v) => String(v).padStart(2, "0")).join(":");
   }
 }
+export function passStringToJson(valueString: string) {
+  if (!valueString || valueString.trim() === "") {
+    return null;
+  }
+
+  try {
+    return JSON.parse(valueString);
+  } catch (err) {
+    console.error(" Invalid JSON string:", valueString);
+    return null;
+  }
+}

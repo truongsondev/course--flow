@@ -72,4 +72,44 @@ export interface CourseDetailResponse {
   studentCount: number;
   totalDuration: number;
   sessions: SessionDetail[];
+  isEnrolled: boolean;
+}
+
+export interface LessonWatch {
+  id: string;
+  title: string;
+  videoUrl?: string | null;
+  docUrl?: string | null;
+  duration?: number | null;
+  position: number;
+}
+
+export interface SessionWatch {
+  id: string;
+  title: string;
+  position: number;
+  lessons: LessonWatch[];
+}
+
+export interface CourseNoteWatch {
+  id: string;
+  note: string;
+  createdAt: string;
+}
+
+export interface CourseProgressWatch {
+  progressPercentage: number;
+  lastLessonId?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface CourseWatchResponse {
+  id: string;
+  title: string;
+  description: string;
+  sessions: SessionWatch[];
+  isEnrolled: boolean;
+  note: CourseNoteWatch | null;
+  progress: CourseProgressWatch;
+  message?: string;
 }

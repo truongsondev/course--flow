@@ -11,6 +11,7 @@ export const endpoint = {
       getEditCourse: `${BASE_URL}/course-for-edit`,
       editCourse: `${BASE_URL}/course-edit`,
       getCourseForDetail: `${BASE_URL}/course-detail`,
+      getCourseForWatch: `${BASE_URL}/course-watch`,
     },
   },
   auth: {

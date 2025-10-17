@@ -13,6 +13,7 @@ import CourseDetail from "@/pages/main/course-detail";
 import InstructorDashboard from "@/pages/instructor/instructor";
 import NotFoundPage from "@/pages/main/not_found";
 import CheckoutPagePro from "@/pages/main/payment";
+import CourseWatch from "@/pages/main/cours-watch";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -22,15 +23,19 @@ const router = createBrowserRouter([
         index: true,
         element: <HomePage />,
       },
-      {
-        path: "course/:id",
-        element: <CourseDetail />,
-      },
-      {
-        path: "my-courses",
-        element: <MyCoursesPage />,
-      },
     ],
+  },
+  {
+    path: "course/:id",
+    element: <CourseDetail />,
+  },
+  {
+    path: "my-courses",
+    element: <MyCoursesPage />,
+  },
+  {
+    path: "course/:id/watch",
+    element: <CourseWatch />,
   },
   {
     path: "/user",

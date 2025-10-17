@@ -46,20 +46,14 @@ export class CourseService {
     }
   }
 
-  async getCourseDetail(courseId: string) {
+  async getCourseDetail(courseId: string, userId: string) {
     const course = await this.prisma.course.findUnique({
       where: { id: courseId },
       include: {
-        instructor: {
-          select: { id: true, full_name: true, email: true },
-        },
+        instructor: { select: { id: true, full_name: true, email: true } },
         reviews: { select: { rating: true } },
-        requirements: {
-          select: { text: true },
-        },
-        enrollments: {
-          select: { id: true },
-        },
+        requirements: { select: { text: true } },
+        enrollments: { select: { userId: true } },
         sessions: {
           include: {
             lessons: {
@@ -95,6 +89,8 @@ export class CourseService {
           course.reviews.length
         : 0;
 
+    const isEnrolled = course.enrollments.some((e) => e.userId === userId);
+
     return {
       id: course.id,
       title: course.title,
@@ -107,6 +103,7 @@ export class CourseService {
       studentCount,
       totalDuration,
       avgRating: Number(avgRating.toFixed(1)),
+      isEnrolled,
       sessions: course.sessions.map((s) => ({
         id: s.id,
         title: s.title,
@@ -119,6 +116,98 @@ export class CourseService {
           docUrl: l.docUrl,
         })),
       })),
+    };
+  }
+
+  async getCourseForWatch(courseId: string, userId: string) {
+    const course = await this.prisma.course.findUnique({
+      where: { id: courseId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        sessions: {
+          orderBy: { position: 'asc' },
+          select: {
+            id: true,
+            title: true,
+            position: true,
+            lessons: {
+              orderBy: { position: 'asc' },
+              select: {
+                id: true,
+                title: true,
+                videoUrl: true,
+                docUrl: true,
+                duration: true,
+                position: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!course) return null;
+
+    const enrollment = await this.prisma.enrollment.findFirst({
+      where: {
+        userId,
+        courseId,
+      },
+    });
+
+    const isEnrolled = !!enrollment;
+
+    if (!isEnrolled) {
+      return {
+        ...course,
+        isEnrolled: false,
+        message: 'User chưa đăng ký khóa học này.',
+      };
+    }
+
+    const note = await this.prisma.courseNote.findFirst({
+      where: { userId, courseId },
+      select: { id: true, note: true, createdAt: true },
+    });
+
+    const progress = await this.prisma.courseProgress.findFirst({
+      where: { userId, courseId },
+      select: {
+        id: true,
+        progressPercentage: true,
+        lastLessonId: true,
+        updatedAt: true,
+      },
+    });
+
+    return {
+      id: course.id,
+      title: course.title,
+      description: course.description,
+      sessions: course.sessions.map((s) => ({
+        id: s.id,
+        title: s.title,
+        position: s.position,
+        lessons: s.lessons.map((l) => ({
+          id: l.id,
+          title: l.title,
+          videoUrl: l.videoUrl,
+          docUrl: l.docUrl,
+          duration: l.duration,
+          position: l.position,
+        })),
+      })),
+      isEnrolled: true,
+      note: note || null,
+      progress: progress
+        ? {
+            progressPercentage: Number(progress.progressPercentage),
+            lastLessonId: progress.lastLessonId,
+            updatedAt: progress.updatedAt,
+          }
+        : { progressPercentage: 0, lastLessonId: null },
     };
   }
 

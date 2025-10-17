@@ -62,10 +62,22 @@ export class CoursesController {
     return this.courseService.getAllCourses(limit);
   }
 
-  @Get('course-detail/:courseId')
+  @Get('course-detail/:courseId/:userId')
   @HttpCode(200)
-  getCourseForDetail(@Param('courseId') courseId: string) {
-    return this.courseService.getCourseDetail(courseId);
+  getCourseForDetail(
+    @Param('courseId') @Param('userId') courseId: string,
+    userId: string,
+  ) {
+    return this.courseService.getCourseDetail(courseId, userId);
+  }
+
+  @Get('course-watch/:courseId/:userId')
+  @HttpCode(200)
+  getCourseForWatch(
+    @Param('courseId') @Param('userId') courseId: string,
+    userId: string,
+  ) {
+    return this.courseService.getCourseForWatch(courseId, userId);
   }
 
   @Put('course-edit')
