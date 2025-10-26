@@ -6,12 +6,15 @@ import "./index.css";
 
 import router from "./routers";
 import { Toaster } from "sonner";
+import { CourseProvider } from "./contexts/course-context";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <AuthProvider>
-      <RouterProvider router={router} />
-      <Toaster position="top-right" expand={false} richColors />
+      <CourseProvider>
+        <RouterProvider router={router} />
+        <Toaster position="top-right" expand={false} richColors />
+      </CourseProvider>
     </AuthProvider>
   </StrictMode>
 );

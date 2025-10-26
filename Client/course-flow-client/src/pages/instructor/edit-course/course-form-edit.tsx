@@ -166,10 +166,12 @@ export const EditCourseForm: React.FC<{
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent
         aria-describedby={undefined}
-        className="w-[999px] h-[75vh] max-w-none max-h-none p-0 bg-gradient-to-br from-white via-indigo-50 to-purple-50 rounded-3xl shadow-2xl overflow-hidden"
+        className="w-[999px] h-[75vh] max-w-none max-h-none p-0 
+             bg-gradient-to-br from-white via-indigo-50 to-purple-50 
+             rounded-3xl shadow-2xl"
       >
         <div className="grid grid-cols-12 h-full w-full">
-          <div className="col-span-8 p-10 overflow-y-auto max-h-[90%]">
+          <div className="col-span-8 p-10 overflow-y-auto h-[75vh]">
             <DialogHeader>
               <DialogTitle className="text-3xl font-bold text-indigo-700 mb-6">
                 Edit Course

@@ -1,5 +1,5 @@
 export interface UserResponse {
-  user_id: number;
+  id: string;
   email: string;
   avt_url: string | null;
   bio: string | null;

@@ -3,11 +3,12 @@ import { endpoint } from "../constants/shared.constant";
 import { EndpointService } from "./endpoint.service";
 import type {
   CategoriesResponse,
-  CourseDetailResponse,
   CourseEditReponse,
   CourseHomeResponse,
   CourseInstructorResponse,
+  CourseReponse,
   CourseWatchResponse,
+  Reviews,
 } from "@/dto/response/course.response.dto";
 class CourseService {
   private static instance: CourseService;
@@ -30,9 +31,9 @@ class CourseService {
     );
   }
 
-  public getCourseForHome(limit: number) {
+  public getCourse(limit: number) {
     const endpointService = EndpointService.getInstance();
-    const url = endpoint.course.v1.getCourseForHome + "/" + limit;
+    const url = endpoint.course.v1.getCourse + "/" + limit;
 
     return endpointService.getEndpoint<ApiResponse<CourseHomeResponse[]>>(url);
   }
@@ -42,9 +43,14 @@ class CourseService {
     const url =
       endpoint.course.v1.getCourseForDetail + "/" + courseId + "/" + userId;
 
-    return endpointService.getEndpoint<
-      ApiResponse<CourseDetailResponse | null>
-    >(url);
+    return endpointService.getEndpoint<ApiResponse<CourseReponse | null>>(url);
+  }
+
+  public getReviewForCourse(courseId: string) {
+    const endpointService = EndpointService.getInstance();
+    const url = endpoint.course.v1.getReviewForCourse + "/" + courseId;
+
+    return endpointService.getEndpoint<ApiResponse<Reviews[]>>(url);
   }
 
   public getCourseForWatch(courseId: string, userId: string) {
@@ -86,6 +92,14 @@ class CourseService {
       course
     );
   }
+  public addReview(
+    courseId: string,
+    userId: string,
+    rating: number,
+    comment: string
+  ) {}
+
+  public searchCourse(query: string) {}
 }
 
 const courseService = CourseService.getInstance();

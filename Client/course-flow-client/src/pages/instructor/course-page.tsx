@@ -64,6 +64,8 @@ export const CoursesPage: React.FC<{ courses: CourseInstructorResponse[] }> = ({
         lessons: session.lessons.map((lesson) => ({
           title: lesson.title,
           position: lesson.position,
+          doc_url: lesson.doc_url,
+          video_url: lesson.video_url,
           duration: 0,
         })),
       })),
@@ -77,10 +79,8 @@ export const CoursesPage: React.FC<{ courses: CourseInstructorResponse[] }> = ({
         if (lesson.video_url) {
           const durationLesson = await getVideoDuration(lesson.video_url);
           console.log("durationLesson:::", durationLesson);
-
           meta.sessions[i].lessons[j].duration = durationLesson;
 
-          // append file/video
           formData.append(
             `sessions[${i}][lessons][${j}][video]`,
             lesson.video_url
@@ -92,8 +92,6 @@ export const CoursesPage: React.FC<{ courses: CourseInstructorResponse[] }> = ({
         }
       }
     }
-
-    // Cuối cùng mới tạo FormData sau khi meta đã được cập nhật
 
     formData.append("meta", JSON.stringify(meta));
     formData.append("videoUrl", data.videoUrl);

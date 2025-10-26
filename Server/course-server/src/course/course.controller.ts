@@ -64,18 +64,24 @@ export class CoursesController {
 
   @Get('course-detail/:courseId/:userId')
   @HttpCode(200)
-  getCourseForDetail(
-    @Param('courseId') @Param('userId') courseId: string,
-    userId: string,
+  getCourse(
+    @Param('courseId') courseId: string,
+    @Param('userId') userId?: string,
   ) {
     return this.courseService.getCourseDetail(courseId, userId);
+  }
+
+  @Get('review/:courseId')
+  @HttpCode(200)
+  getReivew(@Param('courseId') courseId: string) {
+    return this.courseService.getReview(courseId);
   }
 
   @Get('course-watch/:courseId/:userId')
   @HttpCode(200)
   getCourseForWatch(
-    @Param('courseId') @Param('userId') courseId: string,
-    userId: string,
+    @Param('courseId') courseId: string,
+    @Param('userId') userId: string,
   ) {
     return this.courseService.getCourseForWatch(courseId, userId);
   }
@@ -93,7 +99,7 @@ export class CoursesController {
   }
 
   @Post('review-course')
-  @HttpCode(200)
+  @HttpCode(201)
   reviewCourse(@Body() reviewInfor: CourseReview) {
     const { courseId, userId, rating, comment } = { ...reviewInfor };
     return this.courseService.addReview(userId, courseId, rating, comment);

@@ -23,7 +23,6 @@ export class AuthController {
   @UsePipes(new ValidationPipe({ whitelist: true }))
   signUp(@Body() data: UserAuthDTO) {
     const { email, password } = data;
-    console.log(email);
     return this.authService.signUp(email, password);
   }
 
@@ -42,11 +41,10 @@ export class AuthController {
   }
 
   @Post('signin')
-  @HttpCode(201)
+  @HttpCode(200)
   @UsePipes(new ValidationPipe({ whitelist: true }))
   signIn(@Body() data: UserAuthDTO) {
     const { email, password } = data;
-    console.log(email);
     return this.authService.signIn(email, password);
   }
 

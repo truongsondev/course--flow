@@ -216,7 +216,6 @@ export class AuthService {
       privateKey: process.env.IMAGEKIT_PRIVATE_KEY || '',
       urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || '',
     });
-
     const signature = imagekit.getAuthenticationParameters();
     return signature;
   }

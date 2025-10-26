@@ -14,6 +14,9 @@ import InstructorDashboard from "@/pages/instructor/instructor";
 import NotFoundPage from "@/pages/main/not_found";
 import CheckoutPagePro from "@/pages/main/payment";
 import CourseWatch from "@/pages/main/cours-watch";
+import InstructorApprovalPage from "@/pages/admin/Instructor-approvalPage";
+import SearchPage from "@/pages/main/search";
+import SuccessStep from "@/components/pages/successStep";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -42,6 +45,10 @@ const router = createBrowserRouter([
     element: <FacebookStyleProfile />,
   },
   {
+    path: "search",
+    element: <SearchPage />,
+  },
+  {
     path: "auth",
     children: [
       {
@@ -66,6 +73,10 @@ const router = createBrowserRouter([
         index: true,
         element: <AdminPage />,
       },
+      {
+        path: "user",
+        element: <InstructorApprovalPage />,
+      },
     ],
   },
   {
@@ -73,8 +84,12 @@ const router = createBrowserRouter([
     element: <InstructorDashboard />,
   },
   {
-    path: "/payment",
+    path: "/payment/:courseId",
     element: <CheckoutPagePro />,
+  },
+  {
+    path: "/payment/vnpay-return",
+    element: <SuccessStep />,
   },
   {
     path: "*",

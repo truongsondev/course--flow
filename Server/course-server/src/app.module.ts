@@ -9,6 +9,9 @@ import { RedisModule } from './redis/redis.module';
 import { CourseModule } from './course/course.module';
 import { CloudModule } from './cloud/cloud.module';
 import { UploadModule } from './minio/minio.module';
+import { ElasticModule } from './elasticsearch/elasticsearch.module';
+import { ConfigModule } from '@nestjs/config';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -20,6 +23,12 @@ import { UploadModule } from './minio/minio.module';
     CourseModule,
     CloudModule,
     UploadModule,
+    ElasticModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

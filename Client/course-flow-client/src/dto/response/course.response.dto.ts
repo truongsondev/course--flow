@@ -59,19 +59,33 @@ export interface SessionDetail {
   lessons: LessonDetail[];
 }
 
-export interface CourseDetailResponse {
+export interface Reviews {
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  user: {
+    full_name: string;
+  };
+}
+
+export interface CourseReponse {
   id: string;
   title: string;
   description: string;
-  instructorName: string;
-  thumbnailUrl: string;
-  videoUrl: string;
   price: number;
+  thumbnailUrl: string;
+  videoUrl?: string;
+  status: "published" | "paused" | "draft";
+  category: CategoriesResponse;
   requirements: string[];
   avgRating: number;
   studentCount: number;
-  totalDuration: number;
+  instructorName?: string;
+  totalDuration?: number;
+  createdAt?: string;
+
   sessions: SessionDetail[];
+
   isEnrolled: boolean;
 }
 

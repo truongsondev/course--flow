@@ -1,12 +1,41 @@
 import { HttpException, Inject } from '@nestjs/common';
 import { PrismaClient } from 'generated/prisma';
 import { CourseEditResponse } from 'src/dto/response/course-edit-response';
+import { ElasticService } from 'src/elasticsearch/elasticsearch.service';
 import { MinioService } from 'src/minio/minio.service';
 export class CourseService {
   constructor(
     @Inject('PRISMA_CLIENT') private readonly prisma: PrismaClient,
     private readonly minioService: MinioService,
+    private readonly elastic: ElasticService,
   ) {}
+
+  async indexCourse(course: any) {
+    await this.elastic.index('courses', course.id, course);
+  }
+
+  async searchCourses(keyword: string) {
+    const courseInElas = await this.elastic.search('courses', {
+      multi_match: {
+        query: keyword,
+        fields: ['title', 'description', 'instructorName'],
+        fuzziness: 'AUTO',
+      },
+    });
+    if (!courseInElas || courseInElas.length <= 0) {
+      const courseInDb = await this.prisma.course.findMany();
+      console.log(courseInDb);
+      if (courseInDb) {
+        this.indexCourse(courseInDb);
+      }
+      return courseInDb;
+    }
+    return {
+      success: false,
+      data: null,
+    };
+  }
+
   async getAllCourses(limit: number) {
     try {
       const safeLimit = Number(limit) || 0;
@@ -34,7 +63,6 @@ export class CourseService {
       if (!courses || courses.length === 0) {
         throw new HttpException('No courses found', 404);
       }
-
       return courses.map((c: any) => ({
         ...c,
         students: Number(c.students),
@@ -46,13 +74,33 @@ export class CourseService {
     }
   }
 
-  async getCourseDetail(courseId: string, userId: string) {
+  async getReview(courseId: string) {
+    const reviews = await this.prisma.review.findMany({
+      where: {
+        courseId: courseId,
+      },
+      include: {
+        user: { select: { full_name: true } },
+      },
+    });
+    return reviews;
+  }
+  async getCourseDetail(courseId: string, userId: string | undefined) {
     const course = await this.prisma.course.findUnique({
       where: { id: courseId },
       include: {
-        instructor: { select: { id: true, full_name: true, email: true } },
-        reviews: { select: { rating: true } },
+        instructor: { select: { full_name: true } },
+        category: { select: { id: true, name: true } },
         requirements: { select: { text: true } },
+        reviews: {
+          select: {
+            rating: true,
+            comment: true,
+            createdAt: true,
+            user: { select: { full_name: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
         enrollments: { select: { userId: true } },
         sessions: {
           include: {
@@ -65,31 +113,35 @@ export class CourseService {
                 docUrl: true,
                 position: true,
               },
+              orderBy: { position: 'asc' },
             },
           },
+          orderBy: { position: 'asc' },
         },
       },
     });
 
-    if (!course) return null;
+    if (!course) throw new HttpException('Course not found', 404);
 
-    const studentCount = course.enrollments.length;
+    const avgRating =
+      course.reviews.length > 0
+        ? course.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
+          course.reviews.length
+        : 0;
 
     const totalDuration = course.sessions.reduce((acc, session) => {
       const lessonSum = session.lessons.reduce(
-        (sum, lesson) => sum + (lesson.duration || 0),
+        (sum, l) => sum + (l.duration || 0),
         0,
       );
       return acc + lessonSum;
     }, 0);
 
-    const avgRating =
-      course.reviews.length > 0
-        ? course.reviews.reduce((sum, r) => sum + r.rating, 0) /
-          course.reviews.length
-        : 0;
-
-    const isEnrolled = course.enrollments.some((e) => e.userId === userId);
+    const studentCount = course.enrollments.length;
+    const isEnrolled =
+      userId === undefined
+        ? false
+        : course.enrollments.some((e) => e.userId === userId);
 
     return {
       id: course.id,
@@ -100,10 +152,9 @@ export class CourseService {
       videoUrl: course.videoUrl,
       price: course.price,
       requirements: course.requirements.map((r) => r.text),
+      avgRating: Number(avgRating.toFixed(1)),
       studentCount,
       totalDuration,
-      avgRating: Number(avgRating.toFixed(1)),
-      isEnrolled,
       sessions: course.sessions.map((s) => ({
         id: s.id,
         title: s.title,
@@ -111,11 +162,24 @@ export class CourseService {
         lessons: s.lessons.map((l) => ({
           id: l.id,
           title: l.title,
-          duration: l.duration,
+          duration: l.duration || 0,
           videoUrl: l.videoUrl,
           docUrl: l.docUrl,
+          position: l.position,
         })),
       })),
+
+      isEnrolled,
+      reviews: course.reviews.map((r) => ({
+        rating: r.rating,
+        comment: r.comment,
+        createdAt: r.createdAt.toISOString(),
+        user: { full_name: r.user.full_name },
+      })),
+      category: course.category
+        ? { id: course.category.id, name: course.category.name }
+        : null,
+      createdAt: course.createdAt.toISOString(),
     };
   }
 
@@ -139,6 +203,7 @@ export class CourseService {
                 title: true,
                 videoUrl: true,
                 docUrl: true,
+                lessionStatus: true,
                 duration: true,
                 position: true,
               },
@@ -195,6 +260,7 @@ export class CourseService {
           title: l.title,
           videoUrl: l.videoUrl,
           docUrl: l.docUrl,
+          lessionStatus: l.lessionStatus,
           duration: l.duration,
           position: l.position,
         })),
@@ -359,7 +425,7 @@ export class CourseService {
     if (!course) {
       throw new HttpException('Course creation failed', 500);
     }
-
+    this.indexCourse(course);
     return course;
   }
 
@@ -761,7 +827,7 @@ export class CourseService {
         data.push({
           id: course.id,
           title: course.title,
-          instructor: course.instructor?.full_name ?? 'Chưa cập nhật',
+          instructor: course.instructor?.full_name ?? 'Not update',
           price: course.price,
           studentCount,
           revenue,
@@ -795,5 +861,84 @@ export class CourseService {
         throw new Error('External server.');
       }
     }
+  }
+
+  async completeLesson(userId: string, lessonId: string) {
+    const lesson = await this.prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: {
+        session: {
+          include: { course: true },
+        },
+      },
+    });
+
+    if (!lesson) throw new Error('Lesson not found or delete.');
+
+    const courseId = lesson.session.course.id;
+
+    const enrolled = await this.prisma.enrollment.findFirst({
+      where: { userId, courseId },
+    });
+
+    if (!enrolled)
+      throw new Error('User have not yet registed for this course');
+
+    const totalLessons = await this.prisma.lesson.count({
+      where: { session: { courseId } },
+    });
+
+    if (totalLessons === 0) throw new Error('This course not yet lession');
+
+    let progress = await this.prisma.courseProgress.findFirst({
+      where: { userId, courseId },
+    });
+
+    if (!progress) {
+      progress = await this.prisma.courseProgress.create({
+        data: {
+          userId,
+          courseId,
+          lastLessonId: lessonId,
+          progressPercentage: new this.prisma.Decimal(0),
+        },
+      });
+    }
+
+    await this.prisma.lesson.update({
+      where: { id: lessonId },
+      data: { lessionStatus: true },
+    });
+
+    const completedCount = await this.prisma.lesson.count({
+      where: {
+        session: { courseId },
+        lessionStatus: true,
+      },
+    });
+
+    const percentage = (completedCount / totalLessons) * 100;
+
+    const updated = await this.prisma.courseProgress.update({
+      where: { id: progress.id },
+      data: {
+        lastLessonId: lessonId,
+        progressPercentage: new this.prisma.Decimal(percentage.toFixed(2)),
+        updatedAt: new Date(),
+      },
+    });
+
+    if (updated) {
+      throw new HttpException(
+        'Progress have not yet updated, please try again!',
+        400,
+      );
+    }
+
+    return {
+      message: `Lesson "${lesson.title}" finish course.`,
+      progress: `${percentage.toFixed(2)}%`,
+      lastLesson: lesson.title,
+    };
   }
 }

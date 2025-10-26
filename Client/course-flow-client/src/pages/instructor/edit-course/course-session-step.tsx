@@ -95,7 +95,11 @@ function CourseSessionEditStep({
                   )}
                 />
 
-                <CourseLessionEditStep sIdx={sIdx} formCourse={formCourse} />
+                <CourseLessionEditStep
+                  key={sIdx}
+                  sIdx={sIdx}
+                  formCourse={formCourse}
+                />
 
                 <Button
                   variant="destructive"

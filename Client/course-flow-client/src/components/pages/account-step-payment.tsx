@@ -1,5 +1,4 @@
-import { FaRegClock } from "react-icons/fa";
-import { currency } from "../utils/format";
+import type { CourseReponse } from "@/dto/response/course.response.dto";
 interface AccountStepProps {
   name: string;
   email: string;
@@ -10,15 +9,7 @@ interface AccountStepProps {
   canContinueAccount: boolean;
   timeLeft: string;
   basePrice: number;
-  course: {
-    id: string;
-    title: string;
-    description: string;
-    thumbnail: string;
-    price: number;
-    salePrice?: number;
-    features: string[];
-  };
+  course: CourseReponse | null;
 }
 
 export default function AccountStep({
@@ -27,9 +18,7 @@ export default function AccountStep({
   setName,
   setEmail,
   isEmailValid,
-  timeLeft,
-  basePrice,
-  course,
+
   canContinueAccount,
   setStep,
 }: AccountStepProps) {
@@ -60,19 +49,6 @@ export default function AccountStep({
           {email && !isEmailValid && (
             <p className="text-xs text-red-500 mt-1">Email không hợp lệ.</p>
           )}
-        </div>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 p-3 border">
-        <div className="flex items-center gap-2 text-sm text-blue-700">
-          <FaRegClock />
-          <span>Ưu đãi kết thúc sau</span>
-          <span className="font-semibold">{timeLeft}</span>
-        </div>
-        <div className="text-sm">
-          Tiết kiệm ngay{" "}
-          <span className="font-semibold">
-            {currency(course.price - basePrice)}
-          </span>
         </div>
       </div>
       <div className="flex justify-end">

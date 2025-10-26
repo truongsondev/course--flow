@@ -2,39 +2,87 @@ import { Star, Users, Clock } from "lucide-react";
 import LectureItem from "@/components/pages/lecture-item";
 import SubCourse from "@/components/pages/sub-course";
 import { useEffect, useState } from "react";
-import type {
-  CourseDetailResponse,
-  LessonDetail,
-} from "@/dto/response/course.response.dto";
-import { useParams } from "react-router";
+import type { Reviews } from "@/dto/response/course.response.dto";
+import { useNavigate, useParams } from "react-router";
 import courseService from "@/services/course.service";
 import { passStringToJson } from "@/lib/utils";
 import { toast } from "sonner";
+import { formatDuration } from "@/components/utils/util";
+import { useCourse } from "@/contexts/course-context";
 
 export default function CourseDetail() {
   const { id } = useParams<{ id: string }>();
-  const [course, setCourse] = useState<CourseDetailResponse | null>(null);
+  const { course, setCourse } = useCourse();
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewText, setReviewText] = useState("");
+  const [rating, setRating] = useState(5);
+  const [reviews, setReviews] = useState<Reviews[]>([]);
+  const navigate = useNavigate();
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    const userObj = passStringToJson(user);
-    if (!userObj) {
-      toast.error("User data is invalid or missing. Please sign in again.");
-      return;
+    try {
+      const user = localStorage.getItem("user");
+      const userObj = passStringToJson(user);
+      if (!userObj) {
+        toast.error("User data is invalid or missing. Please sign in again.");
+        return;
+      }
+
+      const fetchCourse = async () => {
+        const res = await courseService.getCourseForDetail(
+          id || "",
+          userObj.id
+        );
+        setCourse(res.data.data);
+
+        const courseId = res.data.data?.id;
+        if (courseId) {
+          const reviewRes = await courseService.getReviewForCourse(
+            courseId || ""
+          );
+          setReviews(reviewRes.data.data);
+        }
+      };
+
+      fetchCourse();
+    } catch (e) {
+      console.log(e);
     }
-    const fetchCourse = async () => {
-      const res = await courseService.getCourseForDetail(id || "", userObj.id);
-      setCourse(res.data.data);
-    };
-    fetchCourse();
   }, []);
 
-  const totalTimeForeachSession = (lessons: LessonDetail[]) => {
-    let sum = 0;
-    for (let i = 0; i < lessons.length; ++i) {
-      sum += lessons[i].duration;
+  const handleSubmitReview = async () => {
+    if (!reviewText.trim()) {
+      toast.error("Please write something before submitting.");
+      return;
     }
-    return sum;
+    try {
+      const user = localStorage.getItem("user");
+      const userObj = passStringToJson(user);
+      if (!userObj) {
+        toast.error("User not found. Please sign in again.");
+        return;
+      }
+      await courseService.addReview(
+        id! || "",
+        userObj.id || "",
+        rating || 5,
+        reviewText || ""
+      );
+      toast.success("Review submitted successfully!");
+      setShowReviewForm(false);
+      setReviewText("");
+    } catch (err) {
+      toast.error("Failed to submit review.");
+    }
   };
+
+  const handleLearning = () => {
+    navigate(`/course/${course?.id}/watch`);
+  };
+
+  const handlePayment = () => {
+    navigate(`/payment/${course?.id}`);
+  };
+
   return (
     <div className="px-6 py-10 max-w-7xl mx-auto space-y-12">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -61,7 +109,9 @@ export default function CourseDetail() {
             </div>
             <div className="flex items-center gap-2">
               <Clock size={18} />
-              <span>{course?.totalDuration || 0}h total</span>
+              <span>
+                {formatDuration(course?.totalDuration || 0) || 0} total
+              </span>
             </div>
           </div>
 
@@ -105,12 +155,18 @@ export default function CourseDetail() {
           </div>
 
           {!course?.isEnrolled && (
-            <button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold shadow hover:from-blue-700 hover:to-indigo-700 transition">
+            <button
+              onClick={() => handlePayment()}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold shadow hover:from-blue-700 hover:to-indigo-700 transition"
+            >
               Enroll Now
             </button>
           )}
           {course?.isEnrolled && (
-            <button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold shadow hover:from-blue-700 hover:to-indigo-700 transition">
+            <button
+              onClick={() => handleLearning()}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-semibold shadow hover:from-blue-700 hover:to-indigo-700 transition"
+            >
               Learn now
             </button>
           )}
@@ -127,11 +183,10 @@ export default function CourseDetail() {
         <h2 className="text-2xl font-bold mb-6">Course Content</h2>
         <div className="border rounded-2xl overflow-hidden divide-y">
           {course &&
-            course.sessions.map((session) => (
-              <details className="p-4 group" key={course.id}>
+            course?.sessions.map((session) => (
+              <details className="p-4 group" key={session.id}>
                 <summary className="cursor-pointer font-semibold group-hover:text-blue-600">
-                  Introduction ({session.lessons.length} lectures •{" "}
-                  {totalTimeForeachSession(session.lessons)}min)
+                  {session.title} ({session.lessons.length} lectures)
                 </summary>
                 <ul className="mt-3 pl-4 text-sm text-gray-600 space-y-2">
                   {session.lessons.map((item, index) => (
@@ -164,6 +219,105 @@ export default function CourseDetail() {
         <p className="text-gray-600 leading-relaxed">
           {course?.description || "description"}
         </p>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-bold mb-6">Student Reviews</h2>
+        {reviews && reviews.length > 0 ? (
+          <div className="space-y-6">
+            {reviews.map((review, index) => (
+              <div
+                key={index}
+                className="border rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="font-semibold text-gray-800">
+                    {review.user?.full_name || "Anonymous"}
+                  </div>
+                  <div className="flex items-center gap-1 text-yellow-500">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={16}
+                        fill={i < review.rating ? "currentColor" : "none"}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {review.comment && (
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    {review.comment}
+                  </p>
+                )}
+                <p className="text-xs text-gray-400 mt-1">
+                  {new Date(review.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 italic">No reviews yet.</p>
+        )}
+
+        {!course?.isEnrolled && (
+          <div className="mt-8">
+            {!showReviewForm && (
+              <button
+                onClick={() => setShowReviewForm(true)}
+                className="bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold shadow hover:bg-blue-700 transition"
+              >
+                Write a Review
+              </button>
+            )}
+
+            {showReviewForm && (
+              <div className="border rounded-2xl p-6 mt-4 space-y-4 bg-gray-50">
+                <div>
+                  <label className="block font-medium mb-1">Your Rating:</label>
+                  <div className="flex gap-1 text-yellow-500">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        size={22}
+                        className="cursor-pointer"
+                        fill={star <= rating ? "currentColor" : "none"}
+                        onClick={() => setRating(star)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-medium mb-1">
+                    Your Comment:
+                  </label>
+                  <textarea
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    placeholder="Write your review..."
+                    className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-400 outline-none"
+                    rows={4}
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleSubmitReview}
+                    className="bg-blue-600 text-white px-5 py-2 rounded-xl font-semibold hover:bg-blue-700 transition"
+                  >
+                    Submit
+                  </button>
+                  <button
+                    onClick={() => setShowReviewForm(false)}
+                    className="bg-gray-300 text-gray-800 px-5 py-2 rounded-xl font-semibold hover:bg-gray-400 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       <section>

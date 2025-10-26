@@ -14,17 +14,32 @@ type Course = {
 };
 
 import Course from "@/components/pages/course";
-import type { CourseHomeResponse } from "@/dto/response/course.response.dto";
+import type {
+  CategoriesResponse,
+  CourseHomeResponse,
+} from "@/dto/response/course.response.dto";
 import courseService from "@/services/course.service";
 
 export default function HomePage(): JSX.Element {
   const [courses, setCourses] = useState<CourseHomeResponse[]>([]);
+  const [category, setCategory] = useState<CategoriesResponse[]>([]);
   useEffect(() => {
+    const fetchData = async () => {
+      await Promise.all([fetchCourse(), fetchCategory()]);
+    };
     const fetchCourse = async () => {
-      const res = await courseService.getCourseForHome(4);
+      const res = await courseService.getCourse(4);
       setCourses(res.data.data);
     };
-    fetchCourse();
+    const fetchCategory = async () => {
+      const res = await courseService.getAllCategories();
+      if (res.data.data.length <= 6) {
+        setCategory(res.data.data);
+      }
+      const data = res.data.data.slice(0, 6);
+      setCategory(data);
+    };
+    fetchData();
   }, []);
 
   return (
@@ -121,7 +136,7 @@ export default function HomePage(): JSX.Element {
         </div>
       </section>
 
-      <CategoryPage />
+      <CategoryPage categories={category} />
 
       <section id="courses" className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between">

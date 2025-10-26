@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   FaCcMastercard,
   FaCcPaypal,
@@ -85,7 +84,10 @@ export default function PaymentStep({
 
       {/* Forms */}
       {method === "card" && (
-        <div className="rounded-2xl border p-4 bg-white shadow-sm">
+        <div className="rounded-2xl border p-4 bg-white shadow-sm pointer-events-none opacity-60">
+          <span className="text-red-500">
+            This payment method is not working.
+          </span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">Tên in trên thẻ</label>
@@ -179,11 +181,7 @@ export default function PaymentStep({
             onChange={(e) => setBank(e.target.value)}
             className="mt-1 w-full rounded-xl border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option>Vietcombank</option>
-            <option>Techcombank</option>
-            <option>MB Bank</option>
-            <option>BIDV</option>
-            <option>ACB</option>
+            <option>VN pay</option>
           </select>
           <p className="text-sm text-gray-500 mt-2">
             Sau khi bấm thanh toán, bạn sẽ được chuyển đến cổng thanh toán của
@@ -205,7 +203,10 @@ export default function PaymentStep({
       )}
 
       {method === "paypal" && (
-        <div className="rounded-2xl border p-4 bg-white shadow-sm">
+        <div className="rounded-2xl border p-4 bg-white shadow-sm pointer-events-none opacity-60">
+          <span className="text-red-500">
+            This payment method is not working.
+          </span>
           <p className="text-sm text-gray-600">
             Bạn sẽ được chuyển đến PayPal để hoàn tất thanh toán an toàn.
           </p>

@@ -11,7 +11,7 @@ async function bootstrap() {
     options: {
       client: {
         clientId: 'otp-service',
-        brokers: ['localhost:9092'],
+        brokers: [`${process.env.KAFKA_BROKER || 'localhost:9092'}`],
       },
       consumer: {
         groupId: 'otp-consumer-group',
@@ -21,6 +21,6 @@ async function bootstrap() {
   app.enableCors();
   app.useGlobalInterceptors(new ResponseInterceptor());
   await app.startAllMicroservices();
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3001);
 }
 bootstrap();

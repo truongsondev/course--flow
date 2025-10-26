@@ -9,6 +9,7 @@ import {
   FaFileAlt,
 } from "react-icons/fa";
 import ReactPlayer from "react-player";
+
 import { useParams } from "react-router";
 import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -33,6 +34,10 @@ export default function CourseWatch() {
     if (!completed.includes(currentIndex)) {
       setCompleted([...completed, currentIndex]);
     }
+  };
+
+  const setCurrentVideo = () => {
+    console.log("");
   };
 
   const goPrev = () => {
@@ -88,13 +93,19 @@ export default function CourseWatch() {
 
         <div className="bg-black rounded-lg overflow-hidden">
           {currentVideo ? (
-            <ReactPlayer
-              key={currentVideo.id}
-              width="100%"
-              height="620px"
-              controls
-              playbackRate={playbackRate}
-            />
+            <div className="relative w-full pt-[56.25%] bg-black rounded-lg overflow-hidden">
+              <video
+                key={currentVideo?.id}
+                src={currentVideo?.videoUrl || ""}
+                controls
+                className="absolute top-0 left-0 w-full h-full object-contain bg-black"
+                onEnded={markCompleted}
+                onLoadedMetadata={(e) => {
+                  (e.currentTarget as HTMLVideoElement).playbackRate =
+                    playbackRate;
+                }}
+              />
+            </div>
           ) : (
             <div className="text-white text-center py-40">
               No video available.
@@ -197,7 +208,10 @@ export default function CourseWatch() {
                       flatIndex === currentIndex ? "bg-blue-50" : ""
                     }`}
                   >
-                    <div className="flex items-center">
+                    <div
+                      onClick={() => setCurrentVideo()}
+                      className="flex items-center"
+                    >
                       <FaPlayCircle className="text-blue-500 mr-2" />
                       <span className="text-sm">{lesson.title}</span>
                     </div>

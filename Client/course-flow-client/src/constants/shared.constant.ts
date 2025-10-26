@@ -3,7 +3,7 @@ export const endpoint = {
   course: {
     v1: {
       getAll: `${BASE_URL}/courses`,
-      getCourseForHome: `${BASE_URL}/course/home`,
+      getCourse: `${BASE_URL}/course/home`,
       getById: (id: string) => `/api/courses/${id}`,
       getUserCourses: (userId: string) => `/api/users/${userId}/courses`,
       getAllCategories: `${BASE_URL}/categories`,
@@ -11,7 +11,13 @@ export const endpoint = {
       getEditCourse: `${BASE_URL}/course-for-edit`,
       editCourse: `${BASE_URL}/course-edit`,
       getCourseForDetail: `${BASE_URL}/course-detail`,
+      getReviewForCourse: `${BASE_URL}/review`,
       getCourseForWatch: `${BASE_URL}/course-watch`,
+    },
+  },
+  payment: {
+    v1: {
+      createPayment: `${BASE_URL}/payment/create`,
     },
   },
   auth: {
