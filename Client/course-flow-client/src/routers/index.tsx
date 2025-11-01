@@ -15,7 +15,6 @@ import NotFoundPage from "@/pages/main/not_found";
 import CheckoutPagePro from "@/pages/main/payment";
 import CourseWatch from "@/pages/main/cours-watch";
 import InstructorApprovalPage from "@/pages/admin/Instructor-approvalPage";
-import SearchPage from "@/pages/main/search";
 import SuccessStep from "@/components/pages/successStep";
 const router = createBrowserRouter([
   {
@@ -44,10 +43,7 @@ const router = createBrowserRouter([
     path: "/user",
     element: <FacebookStyleProfile />,
   },
-  {
-    path: "search",
-    element: <SearchPage />,
-  },
+
   {
     path: "auth",
     children: [

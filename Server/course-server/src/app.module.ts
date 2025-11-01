@@ -12,6 +12,7 @@ import { UploadModule } from './minio/minio.module';
 import { ElasticModule } from './elasticsearch/elasticsearch.module';
 import { ConfigModule } from '@nestjs/config';
 import { PaymentModule } from './payment/payment.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PaymentModule } from './payment/payment.module';
       envFilePath: '.env',
     }),
     PaymentModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

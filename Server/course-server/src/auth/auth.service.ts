@@ -1,4 +1,11 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { PrismaClient } from 'generated/prisma';
 import { lastValueFrom } from 'rxjs';
@@ -218,5 +225,19 @@ export class AuthService {
     });
     const signature = imagekit.getAuthenticationParameters();
     return signature;
+  }
+
+  async getRole(userId: string | undefined) {
+    if (!userId) throw new BadRequestException('userId is required');
+
+    try {
+      const { role } = await this.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { role: true },
+      });
+      return role;
+    } catch (e) {
+      throw new NotFoundException('User not found');
+    }
   }
 }

@@ -6,6 +6,7 @@ import type {
   CourseEditReponse,
   CourseHomeResponse,
   CourseInstructorResponse,
+  CourseNoteWatch,
   CourseReponse,
   CourseWatchResponse,
   Reviews,
@@ -97,9 +98,52 @@ class CourseService {
     userId: string,
     rating: number,
     comment: string
-  ) {}
+  ) {
+    const endpointService = EndpointService.getInstance();
+    const url = `${endpoint.course.v1.reviewCourse}`;
+    const body = {
+      courseId,
+      userId,
+      rating,
+      comment,
+    };
+    return endpointService.postEndpoint<ApiResponse<CourseEditReponse>>(
+      url,
+      body
+    );
+  }
 
-  public searchCourse(query: string) {}
+  public addNote(
+    userId: string,
+    courseId: string,
+    noteData: string,
+    noteId: string
+  ) {
+    const endpointService = EndpointService.getInstance();
+    const url = `${endpoint.course.v1.addNote}`;
+    const body = {
+      courseId,
+      userId,
+      noteData,
+      noteId,
+    };
+    return endpointService.postEndpoint<ApiResponse<CourseNoteWatch>>(
+      url,
+      body
+    );
+  }
+
+  public searchCourse(query: string) {
+    const endpointService = EndpointService.getInstance();
+    const url = `${endpoint.course.v1.searchCourse}?query=${query}`;
+    return endpointService.getEndpoint<ApiResponse<CourseHomeResponse[]>>(url);
+  }
+
+  public markLectureCompleted(lessionId: string) {
+    const endpointService = EndpointService.getInstance();
+    const url = `${endpoint.course.v1.markDoneLecture}`;
+    return endpointService.patchEndpoint<ApiResponse<any>>(url, { lessionId });
+  }
 }
 
 const courseService = CourseService.getInstance();

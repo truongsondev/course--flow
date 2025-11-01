@@ -3,12 +3,15 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
 
 interface AuthContextType {
   user: UserResponse | null;
+  authLoaded: boolean;
+  isAuthenticated: boolean;
   login: (params: {
     user: UserResponse;
     accessToken: string;
@@ -17,16 +20,41 @@ interface AuthContextType {
   logout: () => void;
 }
 
+function readUserFromStorage(): UserResponse | null {
+  try {
+    if (typeof window === "undefined") return null;
+    const raw = localStorage.getItem("user");
+    return raw ? (JSON.parse(raw) as UserResponse) : null;
+  } catch {
+    return null;
+  }
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<UserResponse | null>(null);
+  const [user, setUser] = useState<UserResponse | null>(() =>
+    readUserFromStorage()
+  );
+  const [authLoaded, setAuthLoaded] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) {
-      setUser(JSON.parse(stored));
-    }
+    setAuthLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "user" && e.newValue === null) setUser(null);
+      if (e.key === "user" && e.newValue) {
+        try {
+          setUser(JSON.parse(e.newValue));
+        } catch {
+          // ignore
+        }
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const login = ({
@@ -51,16 +79,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("refreshToken");
   };
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+  const isAuthenticated = !!user;
+
+  const value = useMemo(
+    () => ({ user, authLoaded, isAuthenticated, login, logout }),
+    [user, authLoaded, isAuthenticated]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 };

@@ -57,6 +57,12 @@ class AuthenService {
       url
     );
   }
+
+  public async checkRole(userId: string) {
+    const endpointService = EndpointService.getInstance();
+    const url = endpoint.auth.v1.checkRole;
+    return await endpointService.postEndpoint<ApiResponse<string>>(url, userId);
+  }
 }
 
 const authenService = AuthenService.getInstance();

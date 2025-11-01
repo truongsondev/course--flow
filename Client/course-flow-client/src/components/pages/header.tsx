@@ -1,4 +1,4 @@
-import { type FunctionComponent } from "react";
+import { useEffect, useState, type FunctionComponent } from "react";
 import { Link } from "react-scroll";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/contexts/auth-context";
@@ -12,13 +12,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AvatarImage } from "@radix-ui/react-avatar";
+import authenService from "@/services/authen.service";
 
 interface HeaderPageProps {}
 
 const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  console.log("User in header:", user);
+  const { user, logout, authLoaded, isAuthenticated } = useAuth();
+  const [role, setRole] = useState<string | null>(null);
+  useEffect(() => {
+    // if (!authLoaded || !user?.id) return;
+    // (async () => {
+    //   const res = await authenService.checkRole(user.id);
+    //   setRole(res.data.data);
+    // })();
+  }, [authLoaded, user?.id]);
+
   return (
     <header className="bg-white/60 backdrop-blur sticky top-0 z-30 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -120,6 +129,11 @@ const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
                     <UserCog className="mr-2 h-4 w-4" />
                     Quản lý tài khoản
                   </DropdownMenuItem>
+                  {role === "instructor" && (
+                    <DropdownMenuItem onClick={() => navigate("/instructor")}>
+                      Quản lí khóa học
+                    </DropdownMenuItem>
+                  )}
 
                   <DropdownMenuItem onClick={() => console.log("Toggle theme")}>
                     <Moon className="mr-2 h-4 w-4" />

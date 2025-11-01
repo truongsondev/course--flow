@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   UploadedFiles,
   UseInterceptors,
   UsePipes,
@@ -15,6 +16,7 @@ import {
 import { CourseService } from './course.service';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { CourseReview } from 'src/dto/request/course/course.review.dto';
+import { CreateNoteDto } from 'src/dto/request/course/course-note.request.dto';
 
 @Controller()
 export class CoursesController {
@@ -103,5 +105,25 @@ export class CoursesController {
   reviewCourse(@Body() reviewInfor: CourseReview) {
     const { courseId, userId, rating, comment } = { ...reviewInfor };
     return this.courseService.addReview(userId, courseId, rating, comment);
+  }
+
+  @Post('create-note')
+  @HttpCode(201)
+  createNote(@Body() body: CreateNoteDto) {
+    const { userId, courseId, noteData, noteId } = body;
+    return this.courseService.createNote(userId, courseId, noteData, noteId);
+  }
+
+  @Patch('mark-done-lecture')
+  @HttpCode(200)
+  markLectureCompleted(@Body('lessionId') lessionId: string) {
+    return this.courseService.markLectureCompleted(lessionId);
+  }
+
+  @Get('search-courses')
+  @HttpCode(200)
+  searchCourses(@Query('query') query: string) {
+    console.log(query);
+    return this.courseService.searchCourses(query);
   }
 }

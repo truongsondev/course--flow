@@ -13,6 +13,10 @@ export const endpoint = {
       getCourseForDetail: `${BASE_URL}/course-detail`,
       getReviewForCourse: `${BASE_URL}/review`,
       getCourseForWatch: `${BASE_URL}/course-watch`,
+      reviewCourse: `${BASE_URL}/review-course`,
+      addNote: `${BASE_URL}/create-note`,
+      markDoneLecture: `${BASE_URL}/mark-done-lecture`,
+      searchCourse: `${BASE_URL}/search-courses`,
     },
   },
   payment: {
@@ -27,6 +31,7 @@ export const endpoint = {
       verifyOtp: `${BASE_URL}/auth/verify-otp`,
       getTtl: `${BASE_URL}/auth/get-ttl`,
       getSignatureUrl: `${BASE_URL}/auth/get-signature`,
+      checkRole: `${BASE_URL}/auth/check-role`,
     },
   },
   cloud: {

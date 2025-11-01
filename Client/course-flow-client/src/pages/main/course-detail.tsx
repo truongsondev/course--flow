@@ -18,40 +18,35 @@ export default function CourseDetail() {
   const [rating, setRating] = useState(5);
   const [reviews, setReviews] = useState<Reviews[]>([]);
   const navigate = useNavigate();
+
+  const fetchCourseAndReviews = async (courseId: string, userId: string) => {
+    const res = await courseService.getCourseForDetail(courseId, userId);
+    setCourse(res.data.data);
+
+    const reviewRes = await courseService.getReviewForCourse(courseId);
+    setReviews(reviewRes.data.data);
+  };
+
   useEffect(() => {
-    try {
-      const user = localStorage.getItem("user");
-      const userObj = passStringToJson(user);
-      if (!userObj) {
-        toast.error("User data is invalid or missing. Please sign in again.");
-        return;
-      }
-
-      const fetchCourse = async () => {
-        const res = await courseService.getCourseForDetail(
-          id || "",
-          userObj.id
-        );
-        setCourse(res.data.data);
-
-        const courseId = res.data.data?.id;
-        if (courseId) {
-          const reviewRes = await courseService.getReviewForCourse(
-            courseId || ""
-          );
-          setReviews(reviewRes.data.data);
+    (async () => {
+      try {
+        const user = localStorage.getItem("user");
+        const userObj = passStringToJson(user);
+        if (!userObj) {
+          toast.error("User data is invalid or missing. Please sign in again.");
+          return;
         }
-      };
-
-      fetchCourse();
-    } catch (e) {
-      console.log(e);
-    }
-  }, []);
+        if (!id) return;
+        await fetchCourseAndReviews(id, userObj.id);
+      } catch (e) {
+        console.log(e);
+      }
+    })();
+  }, [id]);
 
   const handleSubmitReview = async () => {
     if (!reviewText.trim()) {
-      toast.error("Please write something before submitting.");
+      toast.warning("Please write something before submitting.");
       return;
     }
     try {
@@ -67,9 +62,13 @@ export default function CourseDetail() {
         rating || 5,
         reviewText || ""
       );
+
+      await fetchCourseAndReviews(id!, userObj.id);
+
       toast.success("Review submitted successfully!");
       setShowReviewForm(false);
       setReviewText("");
+      setRating(5);
     } catch (err) {
       toast.error("Failed to submit review.");
     }
@@ -259,7 +258,7 @@ export default function CourseDetail() {
           <p className="text-gray-500 italic">No reviews yet.</p>
         )}
 
-        {!course?.isEnrolled && (
+        {course?.isEnrolled && (
           <div className="mt-8">
             {!showReviewForm && (
               <button

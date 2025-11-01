@@ -1,4 +1,7 @@
-import type { CourseWatchResponse } from "@/dto/response/course.response.dto";
+import type {
+  CourseNoteWatch,
+  CourseWatchResponse,
+} from "@/dto/response/course.response.dto";
 import { passStringToJson } from "@/lib/utils";
 import courseService from "@/services/course.service";
 import {
@@ -8,19 +11,25 @@ import {
   FaArrowRight,
   FaFileAlt,
 } from "react-icons/fa";
-import ReactPlayer from "react-player";
 
 import { useParams } from "react-router";
 import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function CourseWatch() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [course, setCourse] = useState<CourseWatchResponse | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completed, setCompleted] = useState<number[]>([]);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const [note, setNote] = useState("");
+  const [progress, setProgress] = useState<number>(0);
+  const [note, setNote] = useState<CourseNoteWatch>({
+    id: "",
+    note: "",
+    createdAt: "",
+  });
 
   const flatLectures = useMemo(() => {
     if (!course?.sessions) return [];
@@ -28,16 +37,33 @@ export default function CourseWatch() {
   }, [course]);
 
   const currentVideo = flatLectures[currentIndex];
-  const progress = Math.round((completed.length / flatLectures.length) * 100);
 
   const markCompleted = () => {
-    if (!completed.includes(currentIndex)) {
-      setCompleted([...completed, currentIndex]);
+    try {
+      if (!completed.includes(currentIndex)) {
+        setCompleted([...completed, currentIndex]);
+      }
+      courseService.markLectureCompleted(flatLectures[currentIndex].id || "");
+    } catch (error) {
+      toast.error("Error when marking lecture as completed.");
     }
   };
 
-  const setCurrentVideo = () => {
-    console.log("");
+  const handleAddNote = async () => {
+    try {
+      const res = await courseService.addNote(
+        user?.id || "",
+        id || "",
+        note.note,
+        note.id || ""
+      );
+      if (res.data?.success) {
+        toast.success("Note saved successfully.");
+        setNote(res.data.data);
+      }
+    } catch (error) {
+      toast.error("Error when write note.");
+    }
   };
 
   const goPrev = () => {
@@ -63,7 +89,18 @@ export default function CourseWatch() {
         const res = await courseService.getCourseForWatch(id, userJson.id);
         if (res.data?.data) {
           setCourse(res.data.data);
-          setNote(res.data.data.note?.note || "");
+          setNote(res.data.data.note || { id: "", note: "", createdAt: "" });
+          const completedLectures = res.data.data.sessions.flatMap(
+            (s) => s.lessons
+          );
+          const progressCount = completedLectures.filter(
+            (lesson) => lesson.lessionStatus
+          ).length;
+          setProgress((progressCount / completedLectures.length) * 100 || 0);
+          const completedIndexes = completedLectures
+            .map((lesson, index) => (lesson.lessionStatus ? index : -1))
+            .filter((index) => index !== -1);
+          setCompleted(completedIndexes);
         } else {
           toast.error("Không thể tải dữ liệu khóa học.");
         }
@@ -82,12 +119,12 @@ export default function CourseWatch() {
             <div
               className="h-full bg-blue-500"
               style={{
-                width: `${course?.progress?.progressPercentage ?? 0}%`,
+                width: `${progress ?? 0}%`,
               }}
             ></div>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            {course?.progress?.progressPercentage?.toFixed(1) ?? 0}% completed
+            {progress.toFixed(1) ?? 0}% completed
           </p>
         </div>
 
@@ -116,18 +153,8 @@ export default function CourseWatch() {
         <div className="flex justify-between items-center mt-4">
           <div className="flex items-center space-x-2">
             <button
-              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-              onClick={() =>
-                setPlaybackRate(
-                  playbackRate === 1 ? 1.5 : playbackRate === 1.5 ? 2 : 1
-                )
-              }
-            >
-              {playbackRate}x
-            </button>
-            <button
               className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-              onClick={markCompleted}
+              onClick={() => markCompleted()}
             >
               <FaCheckCircle className="inline mr-1" /> Mark as Done
             </button>
@@ -173,24 +200,25 @@ export default function CourseWatch() {
         )}
 
         <div className="mt-6">
-          <h3 className="font-semibold">Ghi chú</h3>
+          <h3 className="font-semibold">Note</h3>
           <textarea
             className="w-full border rounded p-2 mt-2"
             rows={4}
-            placeholder="Viết ghi chú ở đây..."
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
+            placeholder="Write note in here..."
+            value={note.note}
+            onChange={(e) => setNote({ ...note, note: e.target.value })}
           />
-        </div>
-
-        <div className="mt-6">
-          <h3 className="font-semibold">Q&A</h3>
-          <p className="text-sm text-gray-500">Chức năng Q&A sẽ thêm sau.</p>
+          <button
+            onClick={() => handleAddNote()}
+            className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          >
+            Save note
+          </button>
         </div>
       </div>
 
       <div className="w-full md:w-96 border-l border-gray-200 bg-white overflow-y-auto p-4">
-        <h2 className="text-lg font-semibold mb-4">Nội dung khóa học</h2>
+        <h2 className="text-lg font-semibold mb-4">Course content</h2>
         {course?.sessions?.map((section, sIdx) => (
           <div key={section.id} className="mb-4">
             <h3 className="font-medium text-gray-800">{section.title}</h3>
@@ -208,10 +236,7 @@ export default function CourseWatch() {
                       flatIndex === currentIndex ? "bg-blue-50" : ""
                     }`}
                   >
-                    <div
-                      onClick={() => setCurrentVideo()}
-                      className="flex items-center"
-                    >
+                    <div className="flex items-center">
                       <FaPlayCircle className="text-blue-500 mr-2" />
                       <span className="text-sm">{lesson.title}</span>
                     </div>

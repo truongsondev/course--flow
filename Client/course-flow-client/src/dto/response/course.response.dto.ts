@@ -96,6 +96,7 @@ export interface LessonWatch {
   docUrl?: string | null;
   duration?: number | null;
   position: number;
+  lessionStatus: boolean;
 }
 
 export interface SessionWatch {
@@ -123,7 +124,7 @@ export interface CourseWatchResponse {
   description: string;
   sessions: SessionWatch[];
   isEnrolled: boolean;
-  note: CourseNoteWatch | null;
+  note: CourseNoteWatch | "";
   progress: CourseProgressWatch;
   message?: string;
 }

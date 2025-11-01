@@ -49,6 +49,15 @@ export class EndpointService {
     return this.request(() => axios.put<T>(endpoint, data, option));
   }
 
+  // PATCH request
+  public patchEndpoint<T>(
+    endpoint: string,
+    data: any,
+    option?: any
+  ): Promise<AxiosResponse<T>> {
+    return this.request(() => axios.patch<T>(endpoint, data, option));
+  }
+
   // DELETE request
   public deleteEndpoint<T>(
     endpoint: string,

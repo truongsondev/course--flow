@@ -23,12 +23,14 @@ import courseService from "@/services/course.service";
 export default function HomePage(): JSX.Element {
   const [courses, setCourses] = useState<CourseHomeResponse[]>([]);
   const [category, setCategory] = useState<CategoriesResponse[]>([]);
+  const [search, setSearch] = useState<string>("");
   useEffect(() => {
     const fetchData = async () => {
       await Promise.all([fetchCourse(), fetchCategory()]);
     };
     const fetchCourse = async () => {
       const res = await courseService.getCourse(4);
+      console.log(res.data.data);
       setCourses(res.data.data);
     };
     const fetchCategory = async () => {
@@ -41,6 +43,15 @@ export default function HomePage(): JSX.Element {
     };
     fetchData();
   }, []);
+
+  const searchCourse = async () => {
+    try {
+      const res = await courseService.searchCourse(search);
+      setCourses(res.data.data);
+    } catch (error) {
+      console.error("Error searching courses:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900">
@@ -72,8 +83,13 @@ export default function HomePage(): JSX.Element {
                   className="flex-1 outline-none text-sm"
                   placeholder="Tìm khóa học: React, Design, DevOps..."
                   aria-label="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
-                <button className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm shadow hover:bg-indigo-700 transition">
+                <button
+                  onClick={searchCourse}
+                  className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm shadow hover:bg-indigo-700 transition"
+                >
                   Tìm
                 </button>
               </div>
@@ -86,7 +102,7 @@ export default function HomePage(): JSX.Element {
                 </div>
                 <div>
                   <div className="text-base font-semibold">4.8/5</div>
-                  <div className="text-xs">Trung bình học viên</div>
+                  <div className="text-xs">Average student</div>
                 </div>
               </div>
 
@@ -95,8 +111,8 @@ export default function HomePage(): JSX.Element {
                   👩‍🏫
                 </div>
                 <div>
-                  <div className="text-base font-semibold">+120 giảng viên</div>
-                  <div className="text-xs">Chuyên gia trong ngành</div>
+                  <div className="text-base font-semibold">+120 instructor</div>
+                  <div className="text-xs">Industry expert</div>
                 </div>
               </div>
             </div>
@@ -127,8 +143,8 @@ export default function HomePage(): JSX.Element {
                 <div className="text-sm text-indigo-600 font-semibold">$39</div>
               </div>
               <div className="mt-3 grid grid-cols-3 gap-3 text-xs text-slate-600">
-                <div>12 bài học</div>
-                <div>3 giờ</div>
+                <div>12 lession</div>
+                <div>3 hourse</div>
                 <div>Intermediate</div>
               </div>
             </div>
@@ -157,17 +173,17 @@ export default function HomePage(): JSX.Element {
       <section id="instructors" className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <div>
-            <h3 className="text-2xl font-semibold">Vì sao chọn chúng tôi</h3>
+            <h3 className="text-2xl font-semibold">Why choose we</h3>
             <p className="mt-3 text-slate-600 max-w-lg">
-              Nội dung thực tế, trợ giảng hỗ trợ 1:1, cộng đồng, đánh giá chất
-              lượng và cấp chứng chỉ.
+              Practical content, 1:1 tutor support, community, quality
+              assessment and certification.
             </p>
 
             <ul className="mt-6 grid grid-cols-1 gap-3">
               {[
-                "Bài tập thực tế và project",
-                "Giảng viên từ doanh nghiệp",
-                "Hỗ trợ cộng đồng & mentor",
+                "Practical exercises and projects",
+                "Industry instructors",
+                "Community support & mentors",
               ].map((t) => (
                 <li
                   key={t}
@@ -198,33 +214,14 @@ export default function HomePage(): JSX.Element {
                       className="w-14 h-14 rounded-lg object-cover"
                     />
                     <div>
-                      <div className="font-medium">Giảng viên {i + 1}</div>
-                      <div className="text-xs text-slate-500">Chuyên môn</div>
+                      <div className="font-medium">Instructor {i + 1}</div>
+                      <div className="text-xs text-slate-500">Expertise</div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-6 py-8">
-        <h3 className="text-2xl font-semibold">Cảm nhận học viên</h3>
-        <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            { name: "Hà", text: "Khóa học giúp tôi apply vào công ty tốt." },
-            {
-              name: "Quân",
-              text: "Giảng viên tận tâm, bài tập sát với thực tế.",
-            },
-            { name: "Mai", text: "Tôi tiến bộ rõ rệt sau 2 tháng học." },
-          ].map((t, idx) => (
-            <div key={idx} className="bg-white p-6 rounded-2xl shadow">
-              <div className="text-slate-600">“{t.text}”</div>
-              <div className="mt-4 font-medium">— {t.name}</div>
-            </div>
-          ))}
         </div>
       </section>
     </div>
