@@ -13,11 +13,13 @@ import { ElasticModule } from './elasticsearch/elasticsearch.module';
 import { ConfigModule } from '@nestjs/config';
 import { PaymentModule } from './payment/payment.module';
 import { AdminModule } from './admin/admin.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
     AuthModule,
     OTPModule,
+    UserModule,
     DbModule,
     JwtModule,
     RedisModule,

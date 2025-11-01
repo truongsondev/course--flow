@@ -1,37 +1,36 @@
-// import type { ApiResponse } from "@/dto/response/auth.response.dto";
-// import { endpoint } from "../constants/shared.constant";
-// import { EndpointService } from "./endpoint.service";
-// import type {
-//   CategoriesResponse,
-//   CourseDetailResponse,
-//   CourseEditReponse,
-//   CourseHomeResponse,
-//   CourseInstructorResponse,
-//   CourseWatchResponse,
-// } from "@/dto/response/course.response.dto";
-// class UserService {
-//   private static instance: UserService;
+import type { ApiResponse } from "@/dto/response/auth.response.dto";
+import { endpoint } from "../constants/shared.constant";
+import { EndpointService } from "./endpoint.service";
 
-//   //singleton pattern
-//   public static getInstance(): UserService {
-//     if (!UserService.instance) {
-//       UserService.instance = new UserService();
-//     }
+class UserService {
+  private static instance: UserService;
 
-//     return UserService.instance;
-//   }
+  public static getInstance(): UserService {
+    if (!UserService.instance) {
+      UserService.instance = new UserService();
+    }
 
-//   public getAll() {
-//     const endpointService = EndpointService.getInstance();
+    return UserService.instance;
+  }
 
-//     return endpointService.putEndpoint<ApiResponse<any>>("", "");
-//   }
-// }
+  public getUser(userId: string) {
+    const endpointService = EndpointService.getInstance();
+    const url = endpoint.user.v1.getProfile + "/" + userId;
 
-// const userService = UserService.getInstance();
-// export default userService;
+    return endpointService.getEndpoint<ApiResponse<any>>(url);
+  }
 
-import axios from "axios";
+  public updateUser(id: string, data: any) {
+    const endpointService = EndpointService.getInstance();
+    const url = endpoint.user.v1.updateProfile + "/" + id;
+
+    return endpointService.patchEndpoint<ApiResponse<any>>(url, data);
+  }
+}
+
+const userService = UserService.getInstance();
+export default userService;
+
 type Instructor = {
   id: string;
   fullName: string;
@@ -85,4 +84,4 @@ const instructorService = {
   },
 };
 
-export default instructorService;
+export { instructorService };

@@ -34,6 +34,12 @@ export const endpoint = {
       checkRole: `${BASE_URL}/auth/check-role`,
     },
   },
+  user: {
+    v1: {
+      getProfile: `${BASE_URL}/profile`,
+      updateProfile: `${BASE_URL}/update-profile`,
+    },
+  },
   cloud: {
     v1: {
       deleteFile: `${BASE_URL}/cloud/delete-file`,

@@ -905,6 +905,7 @@ export class CourseService {
   }
 
   async markLectureCompleted(idLecture: string) {
+    console.log(idLecture);
     const lesson = await this.prisma.lesson.update({
       where: { id: idLecture },
       data: { lessionStatus: true },

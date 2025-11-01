@@ -117,6 +117,7 @@ export class CoursesController {
   @Patch('mark-done-lecture')
   @HttpCode(200)
   markLectureCompleted(@Body('lessionId') lessionId: string) {
+    console.log('lessionId::', lessionId);
     return this.courseService.markLectureCompleted(lessionId);
   }
 

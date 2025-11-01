@@ -1,48 +1,49 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import userService from "@/services/user.service";
+import { useAuth } from "@/contexts/auth-context";
+import { toast } from "sonner";
 
 export default function FacebookStyleProfile() {
+  const { user: authUser } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
   const [tab, setTab] = useState("courses");
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const user = {
-    name: "Lê Trường Sơn",
-    avatar: "https://via.placeholder.com/150",
-    cover:
-      "https://images.unsplash.com/photo-1503264116251-35a269479413?w=1200",
-    bio: "Sinh viên CNTT tại HCMUTE | Yêu thích React & Node.js 🚀",
-    courses: [
-      { title: "React Cơ bản", status: "Hoàn thành" },
-      { title: "Node.js Nâng cao", status: "Đang học" },
-    ],
-  };
+  useEffect(() => {
+    if (!authUser?.id) return;
+    const fetchUserProfile = async () => {
+      try {
+        setLoading(true);
+        const res = await userService.getUser(authUser.id);
+        setProfile(res.data.data);
+      } catch (error: any) {
+        toast.error("Không thể tải dữ liệu người dùng.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserProfile();
+  }, [authUser?.id]);
 
-  const suggestedCourses = [
-    {
-      title: "Next.js từ A-Z",
-      image:
-        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600",
-      desc: "Xây dựng ứng dụng web hiện đại với Next.js 13.",
-    },
-    {
-      title: "UI/UX Design Cơ bản",
-      image:
-        "https://images.unsplash.com/photo-1522199755839-a2bacb67c546?w=600",
-      desc: "Nguyên tắc thiết kế giao diện người dùng đẹp mắt.",
-    },
-    {
-      title: "TypeScript Mastery",
-      image:
-        "https://images.unsplash.com/photo-1584697964154-3f82e8e7b96c?w=600",
-      desc: "Làm chủ TypeScript để code React & Node.js an toàn.",
-    },
-  ];
+  if (loading)
+    return <div className="p-10 text-center">Đang tải dữ liệu...</div>;
+
+  if (!profile)
+    return (
+      <div className="p-10 text-center text-red-600">
+        Không tìm thấy thông tin người dùng.
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-gray-100">
       <div
         className="h-72 w-full bg-cover bg-center relative"
-        style={{ backgroundImage: `url(${user.cover})` }}
+        style={{
+          backgroundImage: `url(https://images.unsplash.com/photo-1503264116251-35a269479413?w=1200)`,
+        }}
       >
         <div className="absolute bottom-4 right-6">
           <button
@@ -56,17 +57,17 @@ export default function FacebookStyleProfile() {
 
       <div className="max-w-5xl mx-auto px-4 relative -mt-20">
         <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex flex-col md:flex-row items-center md:items-end md:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <img
-                src={user.avatar}
-                alt="Avatar"
-                className="w-40 h-40 rounded-full border-4 border-white shadow-lg object-cover"
-              />
-              <div>
-                <h1 className="text-3xl font-bold">{user.name}</h1>
-                <p className="text-gray-600">{user.bio}</p>
-              </div>
+          <div className="flex items-center gap-4">
+            <img
+              src={"t1.png"}
+              alt="Avatar"
+              className="w-40 h-40 rounded-full border-4 border-white shadow-lg object-cover"
+            />
+            <div>
+              <h1 className="text-3xl font-bold">{profile.fullName}</h1>
+              <p className="text-gray-600">
+                {profile.bio || "Chưa có giới thiệu."}
+              </p>
             </div>
           </div>
 
@@ -75,7 +76,8 @@ export default function FacebookStyleProfile() {
               { id: "about", label: "Giới thiệu" },
               { id: "courses", label: "Khóa học" },
               { id: "skills", label: "Kỹ năng" },
-              { id: "payments", label: "Thanh toán" },
+
+              // { id: "payments", label: "Thanh toán" },
             ].map((t) => (
               <button
                 key={t.id}
@@ -97,7 +99,9 @@ export default function FacebookStyleProfile() {
         {tab === "about" && (
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-2">Giới thiệu</h2>
-            <p className="text-gray-700 leading-relaxed">{user.bio}</p>
+            <p className="text-gray-700 leading-relaxed">
+              {profile.bio || "Chưa có thông tin giới thiệu."}
+            </p>
           </div>
         )}
 
@@ -105,15 +109,19 @@ export default function FacebookStyleProfile() {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-4">Khóa học của tôi</h2>
             <div className="grid sm:grid-cols-2 gap-4">
-              {user.courses.map((c, i) => (
-                <div
-                  key={i}
-                  className="p-4 border rounded-lg shadow-sm hover:shadow-md transition bg-gray-50"
-                >
-                  <h3 className="font-medium">{c.title}</h3>
-                  <p className="text-sm text-gray-500">{c.status}</p>
-                </div>
-              ))}
+              {profile.courses?.length > 0 ? (
+                profile.courses.map((c: any) => (
+                  <div
+                    key={c.id}
+                    className="p-4 border rounded-lg shadow-sm hover:shadow-md transition bg-gray-50"
+                  >
+                    <h3 className="font-medium">{c.title}</h3>
+                    <p className="text-sm text-gray-500">{c.status}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500">Bạn chưa có khóa học nào.</p>
+              )}
             </div>
           </div>
         )}
@@ -122,7 +130,7 @@ export default function FacebookStyleProfile() {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-4">Kỹ năng</h2>
             <div className="flex gap-2 flex-wrap">
-              {["React", "Next.js", "Node.js", "UI/UX"].map((skill, i) => (
+              {["React", "Node.js", "SQL", "TypeScript"].map((skill, i) => (
                 <span
                   key={i}
                   className="px-3 py-1 rounded-full bg-gray-100 text-sm text-gray-700"
@@ -134,41 +142,12 @@ export default function FacebookStyleProfile() {
           </div>
         )}
 
-        {tab === "payments" && (
+        {/* {tab === "payments" && (
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-4">Lịch sử thanh toán</h2>
-            <p className="text-gray-500 text-sm">Chưa có dữ liệu</p>
+            <p className="text-gray-500 text-sm">Chưa có dữ liệu.</p>
           </div>
-        )}
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">
-            Khóa học có thể bạn quan tâm
-          </h2>
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {suggestedCourses.map((course, i) => (
-              <div
-                key={i}
-                className="rounded-lg overflow-hidden shadow hover:shadow-lg transition"
-              >
-                <img
-                  src={course.image}
-                  alt={course.title}
-                  className="w-full h-32 object-cover"
-                />
-                <div className="p-3">
-                  <h3 className="font-medium">{course.title}</h3>
-                  <p className="text-sm text-gray-600 line-clamp-2">
-                    {course.desc}
-                  </p>
-                  <button className="mt-2 text-sm text-blue-600 hover:underline">
-                    Xem chi tiết
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        )} */}
       </div>
 
       {isEditing && (
@@ -181,15 +160,35 @@ export default function FacebookStyleProfile() {
               <X className="w-5 h-5" />
             </button>
             <h2 className="text-xl font-bold mb-4">Chỉnh sửa hồ sơ</h2>
-            <form className="grid gap-4">
+            <form
+              className="grid gap-4"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  const form = e.target as HTMLFormElement;
+                  const fullName = (form[0] as HTMLInputElement).value;
+                  const bio = (form[1] as HTMLTextAreaElement).value;
+
+                  await userService.updateUser(authUser?.id || "", {
+                    fullName,
+                    bio,
+                  });
+                  setProfile({ ...profile, fullName, bio });
+                  toast.success("Cập nhật hồ sơ thành công!");
+                  setIsEditing(false);
+                } catch {
+                  toast.error("Không thể cập nhật hồ sơ.");
+                }
+              }}
+            >
               <input
-                placeholder="Tên"
-                defaultValue={user.name}
+                placeholder="Họ và tên"
+                defaultValue={profile.fullName}
                 className="w-full border rounded px-3 py-2"
               />
               <textarea
                 placeholder="Giới thiệu"
-                defaultValue={user.bio}
+                defaultValue={profile.bio}
                 className="w-full border rounded px-3 py-2 h-24"
               />
               <div className="flex justify-end gap-2">

@@ -30,7 +30,6 @@ export default function HomePage(): JSX.Element {
     };
     const fetchCourse = async () => {
       const res = await courseService.getCourse(4);
-      console.log(res.data.data);
       setCourses(res.data.data);
     };
     const fetchCategory = async () => {
@@ -47,6 +46,7 @@ export default function HomePage(): JSX.Element {
   const searchCourse = async () => {
     try {
       const res = await courseService.searchCourse(search);
+      console.log(res.data.data);
       setCourses(res.data.data);
     } catch (error) {
       console.error("Error searching courses:", error);
