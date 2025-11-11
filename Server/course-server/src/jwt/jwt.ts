@@ -9,7 +9,7 @@ class JWTClient {
     try {
       const accessToken = jwt.sign(payload, privateKey, {
         algorithm: 'RS256',
-        expiresIn: '1h',
+        expiresIn: '1m',
       } as SignOptions);
 
       const refreshToken = jwt.sign(payload, privateKey, {

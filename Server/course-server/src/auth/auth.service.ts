@@ -129,7 +129,6 @@ export class AuthService {
       throw new HttpException('Invalid OTP', HttpStatus.BAD_REQUEST);
     }
 
-    // OTP hợp lệ
     await this.prisma.user.update({
       where: { email },
       data: {
@@ -156,14 +155,9 @@ export class AuthService {
   }
 
   async signIn(email: string, passwordReq: string) {
-    // Find user by email
-    const userExists = await this.prisma.user.findUnique({
-      where: {
-        email: email,
-      },
-    });
+    const userExists = await this.prisma.user.findUnique({ where: { email } });
     if (!userExists) {
-      throw new HttpException('User not found', 404);
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
     const isMatched = await bcrypt.compare(passwordReq, userExists.password);
@@ -171,34 +165,22 @@ export class AuthService {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
 
-    const isVerified = userExists.user_verified;
-    if (!isVerified) {
+    if (!userExists.user_verified) {
       throw new HttpException(
         'Email has been registered but not verified, please verify',
         HttpStatus.CONFLICT,
       );
     }
 
-    const { publicKey: generatedPublicKey, privateKey: generatedPrivateKey } =
-      generateKeyPairSync('rsa', {
-        modulusLength: 2048,
-        publicKeyEncoding: {
-          type: 'spki',
-          format: 'pem',
-        },
-        privateKeyEncoding: {
-          type: 'pkcs8',
-          format: 'pem',
-        },
-      });
+    const privateKey = process.env.JWT_PRIVATE_KEY?.replace(/\\n/g, '\n') || '';
 
     const { accessToken, refreshToken } = await this.jwtClient.createTokenPair(
-      generatedPrivateKey,
+      privateKey,
       { id: userExists.id },
     );
 
     if (!accessToken || !refreshToken) {
-      throw new HttpException('Create token fail', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Create token failed', HttpStatus.BAD_REQUEST);
     }
 
     const {
@@ -239,5 +221,22 @@ export class AuthService {
     } catch (e) {
       throw new NotFoundException('User not found');
     }
+  }
+
+  async refreshToken(refreshToken: string) {
+    if (!refreshToken) {
+      throw new HttpException('Refresh token is required', 401);
+    }
+    const publicKey = process.env.JWT_PUBLIC_KEY?.replace(/\\n/g, '\n') || '';
+    const privateKey = process.env.JWT_PRIVATE_KEY?.replace(/\\n/g, '\n') || '';
+    const payload = await this.jwtClient.verifyToken(refreshToken, publicKey);
+    if (!payload) {
+      throw new HttpException('Invalid refresh token', 401);
+    }
+    const { accessToken, refreshToken: newRefreshToken } =
+      await this.jwtClient.createTokenPair(privateKey, {
+        id: (payload as any).id,
+      });
+    return { accessToken, refreshToken: newRefreshToken };
   }
 }

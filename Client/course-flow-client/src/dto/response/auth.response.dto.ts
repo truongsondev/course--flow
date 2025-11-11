@@ -13,6 +13,11 @@ export interface SignInResponse {
   user: any;
 }
 
+export interface tokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
 export interface TTLResponse {
   ttl: number;
 }

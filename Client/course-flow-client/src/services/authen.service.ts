@@ -3,11 +3,14 @@ import type {
   imageKitResponse,
   SignInResponse,
   SignUpResponse,
+  tokenResponse,
   TTLResponse,
 } from "@/dto/response/auth.response.dto";
 import { endpoint } from "../constants/shared.constant";
 import { EndpointService } from "./endpoint.service";
 import type { authRequest } from "@/dto/request/auth.request.dto";
+import { CommonService } from "./common.service";
+import { toast } from "sonner";
 class AuthenService {
   private static instance: AuthenService;
 
@@ -61,7 +64,44 @@ class AuthenService {
   public async checkRole(userId: string) {
     const endpointService = EndpointService.getInstance();
     const url = endpoint.auth.v1.checkRole;
-    return await endpointService.postEndpoint<ApiResponse<string>>(url, userId);
+    return await endpointService.postEndpoint<ApiResponse<string>>(url, {
+      userId,
+    });
+  }
+
+  public async refreshToken() {
+    try {
+      const token =
+        CommonService.getInstance().getTokenFromLocalStorage("refreshToken");
+      if (!token) {
+        toast.error("Invalid user session. Please log in again.");
+        return null;
+      }
+      const endpointService = EndpointService.getInstance();
+      const url = endpoint.auth.v1.refreshToken;
+
+      const res = await endpointService.postEndpoint<
+        ApiResponse<tokenResponse>
+      >(url, {
+        refreshToken: token,
+      });
+      if (res.data.success) {
+        const accessToken = res.data.data.accessToken;
+        const refreshToken = res.data.data.refreshToken;
+        CommonService.getInstance().saveTokenToLocalStorage(
+          "accessToken",
+          accessToken
+        );
+        CommonService.getInstance().saveTokenToLocalStorage(
+          "refreshToken",
+          refreshToken
+        );
+        return accessToken;
+      }
+    } catch (error) {
+      toast.error("Session refresh failed. Please log in again.");
+      return null;
+    }
   }
 }
 

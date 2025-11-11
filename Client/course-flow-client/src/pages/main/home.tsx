@@ -28,6 +28,7 @@ export default function HomePage(): JSX.Element {
     const fetchData = async () => {
       await Promise.all([fetchCourse(), fetchCategory()]);
     };
+
     const fetchCourse = async () => {
       const res = await courseService.getCourse(4);
       setCourses(res.data.data);
@@ -81,7 +82,7 @@ export default function HomePage(): JSX.Element {
               <div className="flex-1 bg-white rounded-2xl shadow-xl p-3 flex items-center gap-3 border border-slate-200">
                 <input
                   className="flex-1 outline-none text-sm"
-                  placeholder="Tìm khóa học: React, Design, DevOps..."
+                  placeholder="Search course: React, Design, DevOps..."
                   aria-label="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -162,7 +163,7 @@ export default function HomePage(): JSX.Element {
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {courses &&
             courses.length > 0 &&
-            courses.map((course) => <Course course={course} />)}
+            courses.map((course) => <Course key={course.id} course={course} />)}
           {!courses ||
             (courses.length <= 0 && (
               <div className="">No course for this time</div>

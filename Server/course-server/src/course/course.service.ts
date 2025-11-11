@@ -1,4 +1,5 @@
 import { HttpException, Inject } from '@nestjs/common';
+import e from 'express';
 import { PrismaClient } from 'generated/prisma';
 import { CourseEditResponse } from 'src/dto/response/course-edit-response';
 import { ElasticService } from 'src/elasticsearch/elasticsearch.service';
@@ -15,6 +16,7 @@ export class CourseService {
   }
 
   async searchCourses(keyword: string) {
+    await this.elastic.ensureIndexExists('courses');
     const courseInElas = await this.elastic.search('courses', {
       multi_match: {
         query: keyword,
@@ -914,5 +916,86 @@ export class CourseService {
       throw new HttpException('Lesson not found', 404);
     }
     return lesson;
+  }
+
+  async getMyCourses(
+    userId: string,
+    { limit, c }: { limit?: number; c?: string },
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (user.role === 'instructor') {
+      const instructorCourses = await this.prisma.course.findMany({
+        where: { instructorId: userId },
+        include: {
+          category: true,
+          enrollments: true,
+          reviews: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      return instructorCourses;
+    }
+
+    if (user.role === 'student') {
+      const enrollments = await this.prisma.enrollment.findMany({
+        where: {
+          userId: userId,
+          ...(c
+            ? {
+                course: {
+                  is: {
+                    categoryId: c,
+                  },
+                },
+              }
+            : {}),
+        },
+        include: {
+          course: {
+            include: {
+              instructor: { select: { full_name: true } },
+              sessions: {
+                include: {
+                  lessons: {
+                    select: { lessionStatus: true },
+                  },
+                },
+              },
+              category: { select: { name: true } },
+            },
+          },
+        },
+        orderBy: { enrolledAt: 'desc' },
+      });
+
+      return enrollments.map((enroll) => {
+        const lessons = enroll.course.sessions.flatMap((s) => s.lessons);
+        const totalLessons = lessons.length;
+        const completed = lessons.filter((l) => l.lessionStatus).length;
+        const progressPercentage =
+          totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
+
+        return {
+          id: enroll.course.id,
+          title: enroll.course.title,
+          thumbnailUrl: enroll.course.thumbnailUrl,
+          description: enroll.course.description,
+          instructorName: enroll.course.instructor?.full_name ?? '',
+          category: enroll.course.category?.name,
+          createAt: enroll.enrolledAt,
+          progressPercentage,
+        };
+      });
+    }
+
+    return [];
   }
 }

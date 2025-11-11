@@ -11,4 +11,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    allowedHosts: ["semiresolute-lannie-exhaustedly.ngrok-free.dev"], // ✅ cho phép host này
+    host: true,
+    port: 5173,
+  },
 });

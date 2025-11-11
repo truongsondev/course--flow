@@ -14,6 +14,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PaymentModule } from './payment/payment.module';
 import { AdminModule } from './admin/admin.module';
 import { UserModule } from './user/user.module';
+import { JwtStrategyModule } from './guards/auth/jwt-strategy.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { UserModule } from './user/user.module';
     JwtModule,
     RedisModule,
     CourseModule,
+    JwtStrategyModule,
     CloudModule,
     UploadModule,
     ElasticModule,

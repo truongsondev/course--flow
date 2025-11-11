@@ -59,4 +59,10 @@ export class AuthController {
   getRole(@Body('userId') userId: string) {
     return this.authService.getRole(userId);
   }
+
+  @Post('refresh-token')
+  @HttpCode(200)
+  refreshTokens(@Body('refreshToken') refreshToken: string) {
+    return this.authService.refreshToken(refreshToken);
+  }
 }

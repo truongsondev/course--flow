@@ -5,18 +5,26 @@ function FooterPage() {
         <div>
           <div className="font-bold text-lg">CourseFlow</div>
           <p className="mt-3 text-sm text-slate-400">
-            Học online — Nâng tầm kỹ năng.
+            Learn online — Elevate your skills.
           </p>
         </div>
         <div className="text-sm text-slate-400">
-          <div className="font-medium text-slate-200">Liên hệ</div>
-          <div className="mt-2">abcgmail.com</div>
+          <div className="font-medium text-slate-200">Contact</div>
+          <div className="mt-2">sonltute@gmail.com</div>
           <div className="mt-1">+84 123 456 789</div>
         </div>
 
         <div className="text-sm text-slate-400">
-          <div className="font-medium text-slate-200">Theo dõi</div>
-          <div className="mt-2 flex gap-3">Twitter • Facebook • LinkedIn</div>
+          <div className="font-medium text-slate-200">Follow Us</div>
+          <div className="mt-2 flex gap-3">
+            <a
+              href="https://www.facebook.com/ninh.cam.144?locale=vi_VN"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Facebook
+            </a>
+          </div>
         </div>
       </div>
       <div className="border-t border-slate-800/40 text-center py-4 text-xs text-slate-500">

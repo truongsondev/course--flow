@@ -13,6 +13,37 @@ export class ElasticService {
     });
   }
 
+  async ensureIndexExists(index: string) {
+    try {
+      const exists = await this.elastic.indices.exists({ index });
+
+      if (!exists) {
+        await this.elastic.indices.create({
+          index,
+          body: {
+            mappings: {
+              properties: {
+                id: { type: 'keyword' },
+                title: { type: 'text' },
+                description: { type: 'text' },
+                instructorName: { type: 'text' },
+                price: { type: 'double' },
+                rating: { type: 'float' },
+                students: { type: 'integer' },
+                cover: { type: 'keyword' },
+              },
+            },
+          },
+        });
+
+        console.log(`Created index [${index}]`);
+      } else {
+        console.log(`ℹndex [${index}] already exists`);
+      }
+    } catch (error) {
+      console.error(`Failed to ensure index [${index}]`, error);
+    }
+  }
   async search(index: string, query: any) {
     const result = await this.elastic.search({
       index,

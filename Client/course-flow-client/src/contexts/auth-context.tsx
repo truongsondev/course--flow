@@ -48,9 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (e.key === "user" && e.newValue) {
         try {
           setUser(JSON.parse(e.newValue));
-        } catch {
-          // ignore
-        }
+        } catch {}
       }
     };
     window.addEventListener("storage", onStorage);

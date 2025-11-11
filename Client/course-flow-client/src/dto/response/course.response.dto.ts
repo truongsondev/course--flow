@@ -11,6 +11,17 @@ export interface CourseHomeResponse {
   students: number;
 }
 
+export interface MyCourseResponse {
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+  progressPercentage: number;
+  description: string;
+  category: string;
+  createAt: Date;
+  instructorName?: string;
+}
+
 export interface CourseInstructorResponse {
   id: string;
   title: string;

@@ -20,3 +20,16 @@ export const passStringToJson = (str: string | null) => {
     return null;
   }
 };
+
+export function formatCurrency(
+  amount: number,
+  locale: string = "vi-VN",
+  currency: string = "VND"
+): string {
+  if (isNaN(amount)) return "0 ₫";
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+  }).format(amount);
+}

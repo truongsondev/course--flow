@@ -4,6 +4,7 @@ import type { CourseHomeResponse } from "@/dto/response/course.response.dto";
 
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { formatCurrency } from "@/lib/utils";
 interface courseProps {
   course: CourseHomeResponse;
 }
@@ -32,7 +33,9 @@ export const Course: FunctionComponent<courseProps> = ({ course }) => {
         {/* <div className="text-xs text-slate-500 mt-1">{course.user_id}</div> */}
 
         <div className="mt-3 flex items-center justify-between">
-          <div className="text-sm font-semibold">{course.price}</div>
+          <div className="text-sm font-semibold">
+            {formatCurrency(course.price)}
+          </div>
           <div className="text-xs text-slate-500">
             {course.avgRating} ★ • {course.status}
           </div>

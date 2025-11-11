@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import type { Reviews } from "@/dto/response/course.response.dto";
 import { useNavigate, useParams } from "react-router";
 import courseService from "@/services/course.service";
-import { passStringToJson } from "@/lib/utils";
+import { formatCurrency, passStringToJson } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatDuration } from "@/components/utils/util";
 import { useCourse } from "@/contexts/course-context";
@@ -150,7 +150,7 @@ export default function CourseDetail() {
           />
 
           <div className="text-3xl font-bold text-gray-900">
-            ${course?.price || 0}
+            {formatCurrency(Number(course?.price) || 0) || 0}
           </div>
 
           {!course?.isEnrolled && (

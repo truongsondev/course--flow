@@ -9,6 +9,7 @@ import type {
   CourseNoteWatch,
   CourseReponse,
   CourseWatchResponse,
+  MyCourseResponse,
   Reviews,
 } from "@/dto/response/course.response.dto";
 class CourseService {
@@ -143,6 +144,20 @@ class CourseService {
     const endpointService = EndpointService.getInstance();
     const url = `${endpoint.course.v1.markDoneLecture}`;
     return endpointService.patchEndpoint<ApiResponse<any>>(url, { lessionId });
+  }
+
+  public getMyCourse(userId: string, param?: { limit?: number; c?: string }) {
+    const endpointService = EndpointService.getInstance();
+
+    let url = `${endpoint.course.v1.getMyCourse}/${encodeURIComponent(userId)}`;
+
+    const query = new URLSearchParams();
+    if (param?.limit) query.append("limit", param.limit.toString());
+    if (param?.c) query.append("c", param.c);
+
+    if (query.toString()) url += `?${query.toString()}`;
+
+    return endpointService.getEndpoint<ApiResponse<MyCourseResponse[]>>(url);
   }
 }
 

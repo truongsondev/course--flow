@@ -1,48 +1,50 @@
-const BASE_URL = "http://localhost:3000/api/v1";
+export const BASE_URL = "http://localhost:3000/api/v1";
 export const endpoint = {
   course: {
     v1: {
-      getAll: `${BASE_URL}/courses`,
-      getCourse: `${BASE_URL}/course/home`,
+      getAll: `/courses`,
+      getCourse: `/course/home`,
       getById: (id: string) => `/api/courses/${id}`,
       getUserCourses: (userId: string) => `/api/users/${userId}/courses`,
-      getAllCategories: `${BASE_URL}/categories`,
-      createCourse: `${BASE_URL}/create-course`,
-      getEditCourse: `${BASE_URL}/course-for-edit`,
-      editCourse: `${BASE_URL}/course-edit`,
-      getCourseForDetail: `${BASE_URL}/course-detail`,
-      getReviewForCourse: `${BASE_URL}/review`,
-      getCourseForWatch: `${BASE_URL}/course-watch`,
-      reviewCourse: `${BASE_URL}/review-course`,
-      addNote: `${BASE_URL}/create-note`,
-      markDoneLecture: `${BASE_URL}/mark-done-lecture`,
-      searchCourse: `${BASE_URL}/search-courses`,
+      getAllCategories: `/categories`,
+      createCourse: `/create-course`,
+      getEditCourse: `/course-for-edit`,
+      editCourse: `/course-edit`,
+      getCourseForDetail: `/course-detail`,
+      getReviewForCourse: `/review`,
+      getCourseForWatch: `/course-watch`,
+      reviewCourse: `/review-course`,
+      addNote: `/create-note`,
+      markDoneLecture: `/mark-done-lecture`,
+      searchCourse: `/search-courses`,
+      getMyCourse: `/my-courses`,
     },
   },
   payment: {
     v1: {
-      createPayment: `${BASE_URL}/payment/create`,
+      createPayment: `/payment/create`,
     },
   },
   auth: {
     v1: {
-      signup: `${BASE_URL}/auth/signup`,
-      signin: `${BASE_URL}/auth/signin`,
-      verifyOtp: `${BASE_URL}/auth/verify-otp`,
-      getTtl: `${BASE_URL}/auth/get-ttl`,
-      getSignatureUrl: `${BASE_URL}/auth/get-signature`,
-      checkRole: `${BASE_URL}/auth/check-role`,
+      signup: `/auth/signup`,
+      signin: `/auth/signin`,
+      verifyOtp: `/auth/verify-otp`,
+      getTtl: `/auth/get-ttl`,
+      getSignatureUrl: `/auth/get-signature`,
+      checkRole: `/auth/check-role`,
+      refreshToken: `/auth/refresh-token`,
     },
   },
   user: {
     v1: {
-      getProfile: `${BASE_URL}/profile`,
-      updateProfile: `${BASE_URL}/update-profile`,
+      getProfile: `/profile`,
+      updateProfile: `/update-profile`,
     },
   },
   cloud: {
     v1: {
-      deleteFile: `${BASE_URL}/cloud/delete-file`,
+      deleteFile: `/cloud/delete-file`,
     },
   },
 };

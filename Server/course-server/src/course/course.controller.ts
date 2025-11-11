@@ -9,6 +9,7 @@ import {
   Put,
   Query,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
   UsePipes,
   ValidationPipe,
@@ -17,6 +18,7 @@ import { CourseService } from './course.service';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { CourseReview } from 'src/dto/request/course/course.review.dto';
 import { CreateNoteDto } from 'src/dto/request/course/course-note.request.dto';
+import { JwtAuthGuard } from 'src/guards/auth/jwt-strategy.guard';
 
 @Controller()
 export class CoursesController {
@@ -29,6 +31,7 @@ export class CoursesController {
   }
 
   @Post('create-course')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(201)
   @UseInterceptors(AnyFilesInterceptor())
   async createCourse(
@@ -43,6 +46,7 @@ export class CoursesController {
   }
 
   @Get('course-for-edit/:courseId')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   getCourseForEdit(@Param('courseId') courseId: string) {
     return this.courseService.getCourseForEdit(courseId);
@@ -74,12 +78,14 @@ export class CoursesController {
   }
 
   @Get('review/:courseId')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   getReivew(@Param('courseId') courseId: string) {
     return this.courseService.getReview(courseId);
   }
 
   @Get('course-watch/:courseId/:userId')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   getCourseForWatch(
     @Param('courseId') courseId: string,
@@ -89,6 +95,7 @@ export class CoursesController {
   }
 
   @Put('course-edit')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   @UseInterceptors(AnyFilesInterceptor())
   editCourse(
@@ -101,6 +108,7 @@ export class CoursesController {
   }
 
   @Post('review-course')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(201)
   reviewCourse(@Body() reviewInfor: CourseReview) {
     const { courseId, userId, rating, comment } = { ...reviewInfor };
@@ -108,6 +116,7 @@ export class CoursesController {
   }
 
   @Post('create-note')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(201)
   createNote(@Body() body: CreateNoteDto) {
     const { userId, courseId, noteData, noteId } = body;
@@ -115,6 +124,7 @@ export class CoursesController {
   }
 
   @Patch('mark-done-lecture')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   markLectureCompleted(@Body('lessionId') lessionId: string) {
     console.log('lessionId::', lessionId);
@@ -124,7 +134,17 @@ export class CoursesController {
   @Get('search-courses')
   @HttpCode(200)
   searchCourses(@Query('query') query: string) {
-    console.log(query);
     return this.courseService.searchCourses(query);
+  }
+
+  @Get('my-courses/:userId')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(200)
+  getMyCourses(
+    @Param('userId') userId: string,
+    @Query('limit') limit?: number,
+    @Query('c') c?: string,
+  ) {
+    return this.courseService.getMyCourses(userId, { limit, c });
   }
 }

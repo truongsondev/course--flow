@@ -32,3 +32,12 @@ export interface CourseEditResponse {
   status: 'published' | 'paused' | 'draft';
   category: CategoryResponse | null;
 }
+
+export interface MyCourseResponse {
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+  progressPercentage: number;
+  description: string;
+  instructorName?: string;
+}

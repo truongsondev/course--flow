@@ -2,7 +2,14 @@ import { useEffect, useState, type FunctionComponent } from "react";
 import { Link } from "react-scroll";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/contexts/auth-context";
-import { Bell, MessageCircle, Moon, LogOut, UserCog } from "lucide-react";
+import {
+  Bell,
+  MessageCircle,
+  Moon,
+  LogOut,
+  UserCog,
+  BookOpen,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -18,15 +25,18 @@ interface HeaderPageProps {}
 
 const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
   const navigate = useNavigate();
-  const { user, logout, authLoaded, isAuthenticated } = useAuth();
   const [role, setRole] = useState<string | null>(null);
+  const { user, logout } = useAuth();
   useEffect(() => {
-    // if (!authLoaded || !user?.id) return;
-    // (async () => {
-    //   const res = await authenService.checkRole(user.id);
-    //   setRole(res.data.data);
-    // })();
-  }, [authLoaded, user?.id]);
+    if (!user || !user?.id) {
+      setRole("guest");
+    }
+    const fetchRole = async () => {
+      const res = await authenService.checkRole(user?.id || "");
+      setRole(res.data.data);
+    };
+    fetchRole();
+  }, []);
 
   return (
     <header className="bg-white/60 backdrop-blur sticky top-0 z-30 shadow-sm">
@@ -131,6 +141,14 @@ const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
                   </DropdownMenuItem>
                   {role === "instructor" && (
                     <DropdownMenuItem onClick={() => navigate("/instructor")}>
+                      <BookOpen className="w-4 h-4 mr-2 " />
+                      Quản lí khóa học
+                    </DropdownMenuItem>
+                  )}
+
+                  {role === "student" && (
+                    <DropdownMenuItem onClick={() => navigate("/my-courses")}>
+                      <BookOpen className="w-4 h-4 mr-2 " />
                       Quản lí khóa học
                     </DropdownMenuItem>
                   )}
