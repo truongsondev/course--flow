@@ -1,11 +1,4 @@
-import {
-  Activity,
-  BarChart2,
-  BookOpen,
-  LogOut,
-  Settings,
-  Users,
-} from "lucide-react";
+import { BarChart2, BookOpen, LogOut, Settings, Users } from "lucide-react";
 
 export const Sidebar: React.FC<{
   active: string;
@@ -15,7 +8,6 @@ export const Sidebar: React.FC<{
     { key: "dashboard", label: "Dashboard", icon: <BarChart2 size={18} /> },
     { key: "courses", label: "Courses", icon: <BookOpen size={18} /> },
     { key: "students", label: "Students", icon: <Users size={18} /> },
-    { key: "analytics", label: "Analytics", icon: <Activity size={18} /> },
     { key: "settings", label: "Settings", icon: <Settings size={18} /> },
   ];
 
@@ -24,10 +16,10 @@ export const Sidebar: React.FC<{
       <div>
         <div className="px-6 py-6 flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center text-white font-bold">
-            F
+            T1
           </div>
           <div>
-            <div className="font-bold text-gray-800">Flup</div>
+            <div className="font-bold text-gray-800">Course Flow</div>
             <div className="text-xs text-gray-400">Instructor Panel</div>
           </div>
         </div>

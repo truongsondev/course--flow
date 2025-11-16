@@ -1,6 +1,5 @@
 import { Star, Users, Clock } from "lucide-react";
 import LectureItem from "@/components/pages/lecture-item";
-import SubCourse from "@/components/pages/sub-course";
 import { useEffect, useState } from "react";
 import type { Reviews } from "@/dto/response/course.response.dto";
 import { useNavigate, useParams } from "react-router";
@@ -9,6 +8,7 @@ import { formatCurrency, passStringToJson } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatDuration } from "@/components/utils/util";
 import { useCourse } from "@/contexts/course-context";
+import ChatWindow from "@/lib/chat/chat-windown";
 
 export default function CourseDetail() {
   const { id } = useParams<{ id: string }>();
@@ -17,12 +17,13 @@ export default function CourseDetail() {
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState(5);
   const [reviews, setReviews] = useState<Reviews[]>([]);
+  const [openChat, setOpenChat] = useState(false);
   const navigate = useNavigate();
 
   const fetchCourseAndReviews = async (courseId: string, userId: string) => {
     const res = await courseService.getCourseForDetail(courseId, userId);
     setCourse(res.data.data);
-
+    console.log(res.data.data);
     const reviewRes = await courseService.getReviewForCourse(courseId);
     setReviews(reviewRes.data.data);
   };
@@ -116,7 +117,10 @@ export default function CourseDetail() {
 
           <p className="text-sm text-gray-500">
             Created by{" "}
-            <span className="text-blue-600 font-medium hover:underline cursor-pointer">
+            <span
+              onClick={() => setOpenChat(true)}
+              className="text-blue-600 font-medium hover:underline cursor-pointer"
+            >
               {course?.instructorName || "user"}
             </span>
           </p>
@@ -319,14 +323,14 @@ export default function CourseDetail() {
         )}
       </section>
 
-      <section>
-        <h2 className="text-2xl font-bold mb-6">Related Courses</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((id) => (
-            <SubCourse key={id} id={id} />
-          ))}
+      {openChat && (
+        <div className="fixed bottom-4 right-4 z-[9999]">
+          <ChatWindow
+            userId={course?.instructorId || ""}
+            onClose={() => setOpenChat(false)}
+          />
         </div>
-      </section>
+      )}
     </div>
   );
 }

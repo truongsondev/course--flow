@@ -11,6 +11,18 @@ export interface CourseHomeResponse {
   students: number;
 }
 
+export interface MetaPagination {
+  limit: number;
+  page: number;
+  totalPages: number;
+  totalCourses: number;
+}
+
+export interface CourseHomeResponseWithPage {
+  data: CourseHomeResponse[];
+  meta: MetaPagination;
+}
+
 export interface MyCourseResponse {
   id: string;
   title: string;
@@ -26,13 +38,11 @@ export interface CourseInstructorResponse {
   id: string;
   title: string;
   price: number;
-  students: number;
   videoUrl: string;
   thumbnailUrl: string;
   requirements?: string[];
   sessions: sessionDTO[];
   status: "published" | "paused" | "draft";
-  avgRating: number;
   category: CategoriesResponse;
   createdAt: string;
 }
@@ -92,6 +102,7 @@ export interface CourseReponse {
   avgRating: number;
   studentCount: number;
   instructorName?: string;
+  instructorId: string;
   totalDuration?: number;
   createdAt?: string;
 
@@ -138,4 +149,31 @@ export interface CourseWatchResponse {
   note: CourseNoteWatch | "";
   progress: CourseProgressWatch;
   message?: string;
+}
+
+export interface DashboardStats {
+  totalCourses: number;
+  totalStudents: number;
+  totalOrders: number;
+  totalRevenue: number;
+}
+
+export interface CoursePerformance {
+  id: string;
+  title: string;
+  studentCount: number;
+  avgRating: number;
+  completionRate: number;
+}
+
+export interface DashboardActivity {
+  id: string;
+  text: string;
+  time: string;
+}
+
+export interface DashboardResponse {
+  stats: DashboardStats;
+  performance: CoursePerformance[];
+  activity: DashboardActivity[];
 }

@@ -9,3 +9,17 @@ export interface UserResponse {
   role_id: number;
   user_verified: boolean;
 }
+
+export interface StudentReponse {
+  id: string;
+  email: string;
+  password: string;
+  full_name: string;
+  bio: String;
+}
+
+export interface UserChat {
+  id: string;
+  full_name: string;
+  avt_url: string;
+}

@@ -18,6 +18,7 @@ export const endpoint = {
       markDoneLecture: `/mark-done-lecture`,
       searchCourse: `/search-courses`,
       getMyCourse: `/my-courses`,
+      dashboard: "/dashboard",
     },
   },
   payment: {
@@ -40,11 +41,15 @@ export const endpoint = {
     v1: {
       getProfile: `/profile`,
       updateProfile: `/update-profile`,
+      checkRole: `/check-role`,
+      getStudent: "/student",
+      userChat: "/chat-user",
     },
   },
-  cloud: {
+  chat: {
     v1: {
-      deleteFile: `/cloud/delete-file`,
+      getAllChatInfor: `/chat-list`,
+      getMessage: "/messages",
     },
   },
 };

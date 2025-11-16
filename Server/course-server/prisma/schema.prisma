@@ -14,6 +14,7 @@ model User {
   password  String
   full_name String?
   role      Role
+  avt_url   String?
   bio       String?
   otp       String?
   otp_expiry  DateTime?
@@ -27,8 +28,8 @@ model User {
   reviews        Review[]
   courseProgress CourseProgress[]
   courseNotes    CourseNote[]
-  sentMessages   ChatMessage[]  @relation("SentMessages")
-  receivedMsgs   ChatMessage[]  @relation("ReceivedMessages")
+  // sentMessages   ChatMessage[]  @relation("SentMessages")
+  // receivedMsgs   ChatMessage[]  @relation("ReceivedMessages")
   instructorMsgs InstructorMsg[] @relation("InstructorMsgs")
   studentMsgs    InstructorMsg[] @relation("StudentMsgs")
 
@@ -168,17 +169,17 @@ model CourseNote {
   @@map("course_notes")
 }
 
-model ChatMessage {
-  id        String   @id @default(cuid())
-  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
-  senderId  String
-  receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  receiverId String
-  message   String
-  sentAt    DateTime @default(now())
+// model ChatMessage {
+//   id        String   @id @default(cuid())
+//   sender    User     @relation("SentMessages", fields: [senderId], references: [id])
+//   senderId  String
+//   receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+//   receiverId String
+//   message   String
+//   sentAt    DateTime @default(now())
 
-  @@map("chat_messages")
-}
+//   @@map("chat_messages")
+// }
 
 model InstructorMsg {
   id           String   @id @default(cuid())
@@ -186,6 +187,9 @@ model InstructorMsg {
   instructorId String
   student      User     @relation("StudentMsgs", fields: [studentId], references: [id])
   studentId    String
+
+  fromUserId   String  
+
   message      String
   sentAt       DateTime @default(now())
 

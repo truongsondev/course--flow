@@ -15,37 +15,18 @@ import {
 } from "@/components/ui/table";
 import { DashboardPage } from "./dashboard";
 import { CoursesPage } from "./course-page";
-import type { CourseInstructorResponse } from "@/dto/response/course.response.dto";
+import type {
+  CourseInstructorResponse,
+  DashboardResponse,
+} from "@/dto/response/course.response.dto";
 import courseService from "@/services/course.service";
 import { toast } from "sonner";
-const mockStudents: Student[] = [
-  {
-    id: "s1",
-    name: "Nguyễn An",
-    email: "an@example.com",
-    enrolled: ["React Masterclass"],
-  },
-  {
-    id: "s2",
-    name: "Trần Bình",
-    email: "binh@example.com",
-    enrolled: ["React Masterclass", "NodeJS Pro"],
-  },
-  {
-    id: "s3",
-    name: "Lê Hoa",
-    email: "hoa@example.com",
-    enrolled: ["TypeScript Deep Dive"],
-  },
-];
-
-type Student = {
-  id: string;
-  name: string;
-  email: string;
-  enrolled: string[];
-  avatar?: string;
-};
+import authenService from "@/services/authen.service";
+import { useAuth } from "@/contexts/auth-context";
+import { useNavigate } from "react-router";
+import type { StudentReponse } from "@/dto/response/user.response.dto";
+import userService from "@/services/user.service";
+import ChatWindow from "@/lib/chat/chat-windown";
 
 type Stats = {
   revenueByMonth: { month: string; revenue: number; students: number }[];
@@ -76,7 +57,12 @@ const mockStats: Stats = {
   totalOrders: 980,
 };
 
-const StudentsPage: React.FC<{ students: Student[] }> = ({ students }) => {
+const StudentsPage: React.FC<{ students: StudentReponse[] }> = ({
+  students,
+}) => {
+  const [openChat, setOpenChat] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<string>("");
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -94,22 +80,28 @@ const StudentsPage: React.FC<{ students: Student[] }> = ({ students }) => {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Enrolled</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {students.map((s) => (
                 <TableRow key={s.id}>
-                  <TableCell>{s.name}</TableCell>
+                  <TableCell>{s.full_name || "Updating"}</TableCell>
                   <TableCell>{s.email}</TableCell>
-                  <TableCell>{s.enrolled.join(", ")}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button size="sm" variant="ghost">
                         View
                       </Button>
-                      <Button size="sm">Message</Button>
+                      <Button
+                        onClick={() => {
+                          setOpenChat(true);
+                          setSelectedUser(s.id);
+                        }}
+                        size="sm"
+                      >
+                        Message
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -118,6 +110,14 @@ const StudentsPage: React.FC<{ students: Student[] }> = ({ students }) => {
           </Table>
         </CardContent>
       </Card>
+      {openChat && (
+        <div className="fixed bottom-4 right-4 z-[9999]">
+          <ChatWindow
+            userId={selectedUser}
+            onClose={() => setOpenChat(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -125,21 +125,63 @@ const StudentsPage: React.FC<{ students: Student[] }> = ({ students }) => {
 export default function InstructorDashboard() {
   const [active, setActive] = useState<string>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [students, setStudents] = useState<StudentReponse[]>([]);
+  const [dashboard, setDashboard] = useState<DashboardResponse>();
+  const navigation = useNavigate();
+  const { user } = useAuth();
   const [courses, setCourses] = useState<CourseInstructorResponse[]>([]);
   useEffect(() => {
-    try {
-      const fetchCourses = async () => {
-        const result = await courseService.getCourseListForInstructor();
+    const fetchCourses = async () => {
+      try {
+        const result = await courseService.getCourseListForInstructor(
+          user?.id || ""
+        );
         if (result.data.success && result.data.data) {
-          console.log(result.data.data);
           setCourses(result.data.data);
         }
-      };
-      fetchCourses();
-    } catch (error) {
-      toast.error("Failed to fetch courses. Please try again.");
-    }
+      } catch (error) {
+        toast.error("Access denied.");
+        navigation("/");
+      }
+    };
+
+    const fetchStudents = async () => {
+      try {
+        const result = await userService.getUserForInstructor(user?.id || "");
+        setStudents(result.data.data);
+      } catch (error) {
+        toast.error("Fail to fetch student");
+      }
+    };
+
+    const fetchDataDashboard = async () => {
+      try {
+        const res = await courseService.getDataForDashboard(user?.id || "");
+        setDashboard(res.data.data);
+      } catch (err) {}
+    };
+
+    const fetchData = async () => {
+      await Promise.all([
+        fetchCourses(),
+        fetchStudents(),
+        fetchDataDashboard(),
+      ]);
+    };
+    fetchData();
   }, []);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      const res = await authenService.checkRole(user?.id || "");
+      if (res.data.data !== "instructor") {
+        toast.warning("Access denied.");
+        navigation("/");
+        return;
+      }
+    };
+    // checkRole();
+  });
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar active={active} setActive={setActive} />
@@ -148,10 +190,22 @@ export default function InstructorDashboard() {
         <Topbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
 
         <div className="mt-6">
-          {active === "dashboard" && <DashboardPage stats={mockStats} />}
+          {active === "dashboard" && (
+            <DashboardPage
+              stats={
+                dashboard?.stats || {
+                  totalCourses: courses.length,
+                  totalRevenue: 0,
+                  totalOrders: 0,
+                  totalStudents: students.length,
+                }
+              }
+              performance={dashboard?.performance || []}
+              activity={dashboard?.activity || []}
+            />
+          )}
           {active === "courses" && <CoursesPage courses={courses} />}
-          {active === "students" && <StudentsPage students={mockStudents} />}
-          {active === "analytics" && <DashboardPage stats={mockStats} />}
+          {active === "students" && <StudentsPage students={students} />}
           {active === "settings" && <ProfilePage />}
         </div>
       </div>

@@ -1,6 +1,10 @@
 import type { ApiResponse } from "@/dto/response/auth.response.dto";
 import { endpoint } from "../constants/shared.constant";
 import { EndpointService } from "./endpoint.service";
+import type {
+  StudentReponse,
+  UserChat,
+} from "@/dto/response/user.response.dto";
 
 class UserService {
   private static instance: UserService;
@@ -18,6 +22,19 @@ class UserService {
     const url = endpoint.user.v1.getProfile + "/" + userId;
 
     return endpointService.getEndpoint<ApiResponse<any>>(url);
+  }
+  public getUserChat(userId: string) {
+    const endpointService = EndpointService.getInstance();
+    const url = endpoint.user.v1.userChat + "/" + userId;
+
+    return endpointService.getEndpoint<ApiResponse<UserChat>>(url);
+  }
+
+  public getUserForInstructor(userId: string) {
+    const endpointService = EndpointService.getInstance();
+    const url = endpoint.user.v1.getStudent + `/${userId}`;
+
+    return endpointService.getEndpoint<ApiResponse<StudentReponse[]>>(url);
   }
 
   public updateUser(id: string, data: any) {

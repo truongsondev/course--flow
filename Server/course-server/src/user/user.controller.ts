@@ -17,4 +17,14 @@ export class UsersController {
   ) {
     return this.userService.updateUserProfile(id, body);
   }
+
+  @Get('student/:instructorId')
+  async getStudent(@Param('instructorId') instructorId: string) {
+    return this.userService.getStudentsOfInstructor(instructorId || '');
+  }
+
+  @Get('chat-user/:id')
+  async getUserChat(@Param('id') id: string) {
+    return this.userService.getUserChat(id);
+  }
 }

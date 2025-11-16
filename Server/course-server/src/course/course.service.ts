@@ -14,6 +14,56 @@ export class CourseService {
   async indexCourse(course: any) {
     await this.elastic.index('courses', course.id, course);
   }
+  async getAllCoursesForInstructor(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+      // temperaty comment to code
+      // if (user?.role !== 'instructor') {
+      //   throw new HttpException('Access denied', 403);
+      // }
+      const courses = await this.prisma.course.findMany({
+        where: {
+          instructorId: user?.id || '',
+        },
+        select: {
+          id: true,
+          title: true,
+          price: true,
+          thumbnailUrl: true,
+          videoUrl: true,
+          requirements: true,
+          sessions: true,
+          createdAt: true,
+          status: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      // if (!courses || courses.length === 0) {
+      //   throw new HttpException('No courses found', 404);
+      // }
+      return courses.map((c: any) => ({
+        ...c,
+        students: Number(c.students),
+        avgRating: Number(c.avgRating) === 0 ? 5 : Number(c.avgRating),
+      }));
+    } catch (error) {
+      console.error('error::::', error);
+      throw new HttpException(
+        error.message || 'Fail to fetch course',
+        error.status || 500,
+      );
+    }
+  }
 
   async searchCourses(keyword: string) {
     await this.elastic.ensureIndexExists('courses');
@@ -36,9 +86,17 @@ export class CourseService {
     return courseInElas;
   }
 
-  async getAllCourses(limit: number) {
+  async getAllCourses(limit: number, page: number) {
     try {
-      const safeLimit = Number(limit) || 0;
+      const safeLimit = Number(limit) > 0 ? Number(limit) : 10;
+      const safePage = Number(page) > 0 ? Number(page) : 1;
+      const offset = (safePage - 1) * safeLimit;
+
+      const totalCoursesResult = await this.prisma.$queryRawUnsafe<any[]>(`
+      SELECT COUNT(*) AS count FROM courses;
+    `);
+      const totalCourses = Number(totalCoursesResult[0]?.count || 0);
+      const totalPages = Math.ceil(totalCourses / safeLimit);
 
       const courses = await this.prisma.$queryRawUnsafe<any[]>(`
       SELECT 
@@ -55,19 +113,30 @@ export class CourseService {
       LEFT JOIN categories cr ON cr.id = c.categoryId
       LEFT JOIN enrollments e ON e.courseId = c.id
       LEFT JOIN reviews r ON r.courseId = c.id
-      GROUP BY c.id
-      ORDER BY c.id
-      ${safeLimit > 0 ? `LIMIT ${safeLimit}` : ''};
+      GROUP BY c.id, cr.name
+      ORDER BY c.id DESC
+      LIMIT ${safeLimit} OFFSET ${offset};
     `);
 
       if (!courses || courses.length === 0) {
         throw new HttpException('No courses found', 404);
       }
-      return courses.map((c: any) => ({
+
+      const formattedCourses = courses.map((c: any) => ({
         ...c,
         students: Number(c.students),
         avgRating: Number(c.avgRating) === 0 ? 5 : Number(c.avgRating),
       }));
+
+      return {
+        data: formattedCourses,
+        meta: {
+          page: safePage,
+          limit: safeLimit,
+          totalPages,
+          totalCourses,
+        },
+      };
     } catch (error) {
       console.error('error::::', error);
       throw new HttpException('Failed to fetch courses', 500);
@@ -89,7 +158,7 @@ export class CourseService {
     const course = await this.prisma.course.findUnique({
       where: { id: courseId },
       include: {
-        instructor: { select: { full_name: true } },
+        instructor: { select: { full_name: true, id: true } },
         category: { select: { id: true, name: true } },
         requirements: { select: { text: true } },
         reviews: {
@@ -148,6 +217,7 @@ export class CourseService {
       title: course.title,
       description: course.description,
       instructorName: course.instructor.full_name,
+      instructorId: course.instructor.id,
       thumbnailUrl: course.thumbnailUrl,
       videoUrl: course.videoUrl,
       price: course.price,
@@ -997,5 +1067,148 @@ export class CourseService {
     }
 
     return [];
+  }
+
+  async getDashboardStats(instructorId: string) {
+    // tổng khóa học
+    const totalCourses = await this.prisma.course.count({
+      where: { instructorId },
+    });
+
+    // tổng học viên độc nhất
+    const students = await this.prisma.enrollment.findMany({
+      where: { course: { instructorId } },
+      select: { userId: true },
+    });
+    const totalStudents = new Set(students.map((s) => s.userId)).size;
+
+    // tổng đơn hàng (enrollment có status = paid)
+    const totalOrders = await this.prisma.enrollment.count({
+      where: {
+        course: { instructorId },
+        status: 'paid',
+      },
+    });
+
+    // tổng revenue (giả sử mỗi đơn hàng = course.price)
+    const paidEnrollments = await this.prisma.enrollment.findMany({
+      where: {
+        course: { instructorId },
+        status: 'paid',
+      },
+      include: { course: true },
+    });
+
+    const totalRevenue = paidEnrollments.reduce(
+      (sum, e) => sum + e.course.price,
+      0,
+    );
+
+    return {
+      totalCourses,
+      totalStudents,
+      totalOrders,
+      totalRevenue,
+    };
+  }
+
+  // ------------------------------------------------------
+  // 2. Thống kê chi tiết per course
+  // ------------------------------------------------------
+  async getCoursePerformance(instructorId: string) {
+    const courses = await this.prisma.course.findMany({
+      where: { instructorId },
+      include: {
+        enrollments: true,
+        reviews: true,
+        courseProgress: true,
+      },
+    });
+
+    return courses.map((c) => {
+      const studentCount = c.enrollments.length;
+
+      const avgRating =
+        c.reviews.length === 0
+          ? 0
+          : c.reviews.reduce((s, r) => s + r.rating, 0) / c.reviews.length;
+
+      // completion = % học viên có progressPercentage >= 80%
+      const completed = c.courseProgress.filter(
+        (p) => Number(p.progressPercentage) >= 80,
+      ).length;
+
+      const completionRate =
+        studentCount === 0 ? 0 : Math.round((completed / studentCount) * 100);
+
+      return {
+        id: c.id,
+        title: c.title,
+        studentCount,
+        avgRating,
+        completionRate,
+      };
+    });
+  }
+
+  // ------------------------------------------------------
+  // 3. Recent activity (gộp từ enrollment, review, progress, note)
+  // ------------------------------------------------------
+  async getRecentActivity(instructorId: string) {
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { course: { instructorId } },
+      include: { user: true, course: true },
+      orderBy: { enrolledAt: 'desc' },
+      take: 5,
+    });
+
+    const reviews = await this.prisma.review.findMany({
+      where: { course: { instructorId } },
+      include: { user: true, course: true },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+
+    const progresses = await this.prisma.courseProgress.findMany({
+      where: { course: { instructorId } },
+      include: { user: true, course: true, lastLesson: true },
+      orderBy: { updatedAt: 'desc' },
+      take: 5,
+    });
+
+    const notes = await this.prisma.courseNote.findMany({
+      where: { course: { instructorId } },
+      include: { user: true, course: true },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+
+    const activity = [
+      ...enrollments.map((e) => ({
+        id: `en-${e.id}`,
+        text: `${e.user.full_name} enrolled in "${e.course.title}"`,
+        time: e.enrolledAt,
+      })),
+      ...reviews.map((r) => ({
+        id: `re-${r.id}`,
+        text: `${r.user.full_name} rated "${r.course.title}" ${r.rating}★`,
+        time: r.createdAt,
+      })),
+      ...progresses.map((p) => ({
+        id: `pr-${p.id}`,
+        text: `${p.user.full_name} progressed in "${p.course.title}"`,
+        time: p.updatedAt,
+      })),
+      ...notes.map((n) => ({
+        id: `no-${n.id}`,
+        text: `${n.user.full_name} wrote a note in "${n.course.title}"`,
+        time: n.createdAt,
+      })),
+    ];
+
+    // sort by time desc
+    activity.sort((a, b) => b.time.getTime() - a.time.getTime());
+
+    return activity.slice(0, 10);
   }
 }

@@ -19,20 +19,24 @@ import type {
   CourseHomeResponse,
 } from "@/dto/response/course.response.dto";
 import courseService from "@/services/course.service";
+import { formatCurrency } from "@/lib/utils";
 
 export default function HomePage(): JSX.Element {
   const [courses, setCourses] = useState<CourseHomeResponse[]>([]);
   const [category, setCategory] = useState<CategoriesResponse[]>([]);
   const [search, setSearch] = useState<string>("");
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const fetchCourse = async (pageNumber: number = 1) => {
+    const res = await courseService.getCourse(4, pageNumber);
+    setCourses(res.data.data.data);
+    setTotalPages(res.data.data.meta.totalPages);
+  };
   useEffect(() => {
     const fetchData = async () => {
       await Promise.all([fetchCourse(), fetchCategory()]);
     };
 
-    const fetchCourse = async () => {
-      const res = await courseService.getCourse(4);
-      setCourses(res.data.data);
-    };
     const fetchCategory = async () => {
       const res = await courseService.getAllCategories();
       if (res.data.data.length <= 6) {
@@ -43,6 +47,10 @@ export default function HomePage(): JSX.Element {
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    fetchCourse(page);
+  }, [page]);
 
   const searchCourse = async () => {
     try {
@@ -118,38 +126,73 @@ export default function HomePage(): JSX.Element {
               </div>
             </div>
           </div>
+          {courses.length > 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
+              className="relative"
+            >
+              <div className="rounded-[2rem] overflow-hidden shadow-2xl border border-slate-200">
+                <img
+                  src={
+                    courses[0]?.thumbnailUrl ||
+                    "https://picsum.photos/seed/hero/900/600"
+                  }
+                  alt="Hero"
+                  className="w-full h-[400px] object-cover"
+                />
+              </div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6 }}
-            className="relative"
-          >
-            <div className="rounded-[2rem] overflow-hidden shadow-2xl border border-slate-200">
-              <img
-                src="https://picsum.photos/seed/hero/900/600"
-                alt="Hero"
-                className="w-full h-[400px] object-cover"
-              />
-            </div>
-
-            <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur rounded-2xl shadow-lg p-4 w-72">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xs text-slate-500">Featured lock</div>
-                  <div className="font-semibold">
-                    React Pro: Build Real Projects
+              <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur rounded-2xl shadow-lg p-4 w-72">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-slate-500">Featured lock</div>
+                    <div className="font-semibold">
+                      {courses[0]?.title || "React Pro: Build Real Projects"}
+                    </div>
+                  </div>
+                  <div className="text-sm text-indigo-600 font-semibold">
+                    {formatCurrency(Number(courses[0]?.price) || 0) || "$0"}
                   </div>
                 </div>
-                <div className="text-sm text-indigo-600 font-semibold">$39</div>
               </div>
-              <div className="mt-3 grid grid-cols-3 gap-3 text-xs text-slate-600">
-                <div>12 lession</div>
-                <div>3 hourse</div>
-                <div>Intermediate</div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
+              className="relative"
+            >
+              <div className="rounded-[2rem] overflow-hidden shadow-2xl border border-slate-200">
+                <img
+                  src="https://picsum.photos/seed/hero/900/600"
+                  alt="Hero"
+                  className="w-full h-[400px] object-cover"
+                />
               </div>
-            </div>
-          </motion.div>
+
+              <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur rounded-2xl shadow-lg p-4 w-72">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-slate-500">Featured lock</div>
+                    <div className="font-semibold">
+                      React Pro: Build Real Projects
+                    </div>
+                  </div>
+                  <div className="text-sm text-indigo-600 font-semibold">
+                    $39
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-3 text-xs text-slate-600">
+                  <div>12 lession</div>
+                  <div>3 hourse</div>
+                  <div>Intermediate</div>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </section>
 
@@ -161,14 +204,53 @@ export default function HomePage(): JSX.Element {
         </div>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {courses &&
-            courses.length > 0 &&
-            courses.map((course) => <Course key={course.id} course={course} />)}
-          {!courses ||
-            (courses.length <= 0 && (
-              <div className="">No course for this time</div>
-            ))}
+          {courses && courses.length > 0 ? (
+            courses.map((course) => <Course key={course.id} course={course} />)
+          ) : (
+            <div className="col-span-full text-center text-gray-500 py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+              <p className="text-lg font-medium">
+                No course available at this time.
+              </p>
+            </div>
+          )}
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-4 mt-10 select-none">
+            {/* Nút Prev */}
+            <button
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                page === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white hover:bg-indigo-50 border-gray-300 text-gray-700 hover:border-indigo-300"
+              }`}
+            >
+              ← Previous
+            </button>
+
+            {/* Số trang */}
+            <span className="text-sm font-medium text-gray-600">
+              Page <span className="text-indigo-600 font-semibold">{page}</span>{" "}
+              of{" "}
+              <span className="text-gray-800 font-semibold">{totalPages}</span>
+            </span>
+
+            {/* Nút Next */}
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                page === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white hover:bg-indigo-50 border-gray-300 text-gray-700 hover:border-indigo-300"
+              }`}
+            >
+              Next →
+            </button>
+          </div>
+        )}
       </section>
 
       <section id="instructors" className="max-w-7xl mx-auto px-6 py-12">

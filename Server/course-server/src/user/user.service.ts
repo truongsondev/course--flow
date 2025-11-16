@@ -163,4 +163,60 @@ export class UserService {
       },
     });
   }
+
+  async getStudentsOfInstructor(instructorId: string) {
+    if (!instructorId) throw new Error('Missing instructorId');
+
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: {
+        course: {
+          instructorId,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            password: true,
+            full_name: true,
+            bio: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    const uniqueStudents = new Map();
+    enrollments.forEach((e) => {
+      if (e.user.role === 'student') {
+        uniqueStudents.set(e.user.id, {
+          id: e.user.id,
+          email: e.user.email,
+          password: e.user.password,
+          full_name: e.user.full_name || '',
+          bio: e.user.bio || '',
+        });
+      }
+    });
+
+    return Array.from(uniqueStudents.values());
+  }
+
+  async getUserChat(userId: string) {
+    if (!userId) {
+      throw new HttpException('User invalid', 400);
+    }
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        full_name: true,
+        avt_url: true,
+      },
+    });
+    return user;
+  }
 }

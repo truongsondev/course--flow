@@ -38,8 +38,11 @@ const sessionSchema = z.object({
 const courseSchema = z.object({
   title: z.string().min(3, "Course title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  category_id: z.string(),
-  price: z.number().nonnegative("Price must be >= 0").min(0),
+  category_id: z.string().min(1, "Category is required"),
+  price: z
+    .number()
+    .nonnegative("Price must be >= 0")
+    .min(1, "Price is required"),
   thumbnailUrl: z.union([
     z.string().min(1, "Thumbnail is required"),
     z.instanceof(File),

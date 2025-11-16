@@ -15,6 +15,8 @@ import { PaymentModule } from './payment/payment.module';
 import { AdminModule } from './admin/admin.module';
 import { UserModule } from './user/user.module';
 import { JwtStrategyModule } from './guards/auth/jwt-strategy.module';
+import { ChatGateway } from './socket/events.gateway';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -35,8 +37,9 @@ import { JwtStrategyModule } from './guards/auth/jwt-strategy.module';
     }),
     PaymentModule,
     AdminModule,
+    ChatModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ChatGateway],
 })
 export class AppModule {}

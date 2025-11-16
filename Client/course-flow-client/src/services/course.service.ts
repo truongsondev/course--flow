@@ -5,10 +5,12 @@ import type {
   CategoriesResponse,
   CourseEditReponse,
   CourseHomeResponse,
+  CourseHomeResponseWithPage,
   CourseInstructorResponse,
   CourseNoteWatch,
   CourseReponse,
   CourseWatchResponse,
+  DashboardResponse,
   MyCourseResponse,
   Reviews,
 } from "@/dto/response/course.response.dto";
@@ -24,20 +26,21 @@ class CourseService {
     return CourseService.instance;
   }
 
-  /** get API for all course */
-  public getCourseListForInstructor() {
+  public getCourseListForInstructor(userId: string) {
     const endpointService = EndpointService.getInstance();
-    const url = endpoint.course.v1.getAll;
+    const url = endpoint.course.v1.getAll + `/${userId}`;
     return endpointService.getEndpoint<ApiResponse<CourseInstructorResponse[]>>(
       url
     );
   }
 
-  public getCourse(limit: number) {
+  public getCourse(limit: number, pageNumber: number) {
     const endpointService = EndpointService.getInstance();
-    const url = endpoint.course.v1.getCourse + "/" + limit;
+    const url = endpoint.course.v1.getCourse + "/" + limit + "/" + pageNumber;
 
-    return endpointService.getEndpoint<ApiResponse<CourseHomeResponse[]>>(url);
+    return endpointService.getEndpoint<ApiResponse<CourseHomeResponseWithPage>>(
+      url
+    );
   }
 
   public getCourseForDetail(courseId: string, userId: string) {
@@ -158,6 +161,12 @@ class CourseService {
     if (query.toString()) url += `?${query.toString()}`;
 
     return endpointService.getEndpoint<ApiResponse<MyCourseResponse[]>>(url);
+  }
+
+  public getDataForDashboard(id: string) {
+    const endpointService = EndpointService.getInstance();
+    const url = `${endpoint.course.v1.dashboard}/${id}`;
+    return endpointService.getEndpoint<ApiResponse<DashboardResponse>>(url);
   }
 }
 

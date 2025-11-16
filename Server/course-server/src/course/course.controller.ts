@@ -52,20 +52,23 @@ export class CoursesController {
     return this.courseService.getCourseForEdit(courseId);
   }
 
-  @Get('courses')
+  @Get('courses/:instructorId')
   @HttpCode(200)
-  getAllCourses() {
+  getAllCoursesForInstructor(@Param('instructorId') instructorId: string) {
     try {
-      return this.courseService.getAllCourses(0);
+      return this.courseService.getAllCoursesForInstructor(instructorId);
     } catch (error) {
       console.log(error);
     }
   }
 
-  @Get('course/home/:limit')
+  @Get('course/home/:limit/:pageNumber')
   @HttpCode(200)
-  getCourseForHome(@Param('limit') limit: number) {
-    return this.courseService.getAllCourses(limit);
+  getCourseForHome(
+    @Param('limit') limit: number,
+    @Param('pageNumber') pageNumber: number,
+  ) {
+    return this.courseService.getAllCourses(limit, pageNumber);
   }
 
   @Get('course-detail/:courseId/:userId')
@@ -146,5 +149,18 @@ export class CoursesController {
     @Query('c') c?: string,
   ) {
     return this.courseService.getMyCourses(userId, { limit, c });
+  }
+
+  @Get('dashboard/:id')
+  async getDashboard(@Param('id') id: string) {
+    const stats = await this.courseService.getDashboardStats(id);
+    const performance = await this.courseService.getCoursePerformance(id);
+    const activity = await this.courseService.getRecentActivity(id);
+
+    return {
+      stats,
+      performance,
+      activity,
+    };
   }
 }

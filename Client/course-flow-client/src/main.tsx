@@ -7,6 +7,7 @@ import "./index.css";
 import router from "./routers";
 import { Toaster } from "sonner";
 import { CourseProvider } from "./contexts/course-context";
+import { FloatingChat } from "./lib/chat/flow-chat";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -14,6 +15,7 @@ createRoot(document.getElementById("root")!).render(
       <CourseProvider>
         <RouterProvider router={router} />
         <Toaster position="top-right" expand={false} richColors />
+        {/* <FloatingChat /> */}
       </CourseProvider>
     </AuthProvider>
   </StrictMode>
