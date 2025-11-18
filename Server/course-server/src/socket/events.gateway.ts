@@ -1,56 +1,66 @@
 import {
-  WebSocketGateway,
-  SubscribeMessage,
-  MessageBody,
-  WebSocketServer,
   ConnectedSocket,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
+  MessageBody,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { ChatService } from 'src/chat/chat.service';
 
 @WebSocketGateway(3001, {
-  cors: {
-    origin: 'http://localhost:5173',
-    methods: ['GET', 'POST'],
-  },
+  cors: { origin: 'http://localhost:5173' },
 })
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway {
   @WebSocketServer()
   server: Server;
 
-  // Map userId -> socketId
   private userSockets = new Map<string, string>();
 
-  handleConnection(client: Socket) {
-    console.log(`Socket Connected: ${client.id}`);
-  }
-
-  handleDisconnect(client: Socket) {
-    for (const [userId, socketId] of this.userSockets.entries()) {
-      if (socketId === client.id) {
-        this.userSockets.delete(userId);
-        console.log(`User ${userId} disconnected`);
-      }
-    }
-  }
+  constructor(private chatService: ChatService) {}
 
   @SubscribeMessage('register')
   register(@MessageBody() userId: string, @ConnectedSocket() client: Socket) {
     if (!userId) return;
-
     this.userSockets.set(userId, client.id);
-
-    console.log(`User ${userId} registered with socket ${client.id}`);
+    console.log('Registered:', userId, client.id);
   }
 
-  // Hàm server gọi để gửi realtime
+  @SubscribeMessage('sendMessage')
+  async handleSend(@MessageBody() data: any) {
+    const { fromUserId, toUserId, message } = data;
+    const savedMessage = await this.chatService.sendMessage(
+      fromUserId,
+      toUserId,
+      message,
+    );
+
+    // realtime
+    this.sendToUser(toUserId, savedMessage);
+
+    return savedMessage;
+  }
+
+  @SubscribeMessage('seenMessage')
+  async seenMessage(@MessageBody() body: any) {
+    const { messageId, byUser } = body;
+
+    const updated = await this.chatService.markAsSeen(messageId);
+
+    const senderSocket = this.userSockets.get(updated.fromUserId);
+    if (senderSocket) {
+      this.server
+        .to(senderSocket)
+        .emit('messageSeen', { messageId, seenAt: updated.seenAt });
+    }
+  }
+
+  // giúp component khác gọi trực tiếp
   sendToUser(userId: string, payload: any) {
     const socketId = this.userSockets.get(userId);
     if (socketId) {
+      console.log('Chỗ này gọi');
       this.server.to(socketId).emit('receiveMessage', payload);
-    } else {
-      console.log(`⚠ User ${userId} offline → only saved to DB`);
     }
   }
 }

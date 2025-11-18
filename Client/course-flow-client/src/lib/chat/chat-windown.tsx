@@ -8,14 +8,15 @@ import { useEffect, useState } from "react";
 import io from "socket.io-client";
 
 export default function ChatWindow({
-  userId, // studentId
+  userId, // người mình đang chat (student)
   onClose,
 }: {
   userId: string;
   onClose: () => void;
 }) {
   const { user: userLogin } = useAuth();
-  const currentUserId = userLogin?.id || "";
+  const currentUserId = userLogin?.id || ""; // instructor/admin
+
   const [socket, setSocket] = useState<any>(null);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatInfor[]>([]);
@@ -25,27 +26,28 @@ export default function ChatWindow({
     avt_url: "/t1.png",
   });
 
+  // ================================
+  // SOCKET INIT
+  // ================================
   useEffect(() => {
     const s = io("http://localhost:3001");
 
+    // đăng ký socket cho user đang login
     s.emit("register", currentUserId);
-
+    // nhận message realtime
     s.on("receiveMessage", (data) => {
       setMessages((prev) => [...prev, data]);
     });
 
     setSocket(s);
 
-    // ⛔ KHÔNG ĐƯỢC return s hoặc return () => s
-    // ✔ Phải return cleanup đúng chuẩn:
     return () => {
-      s.disconnect(); // chỉ cần disconnect, không return gì hết
+      s.disconnect();
     };
   }, [currentUserId]);
 
-  // 🔥 Load lịch sử + info user
   useEffect(() => {
-    const fetchData = async () => {
+    const load = async () => {
       const [msgRes, userRes] = await Promise.all([
         chatService.getAllMessage(userId, currentUserId),
         userService.getUserChat(userId),
@@ -55,26 +57,24 @@ export default function ChatWindow({
       setUser(userRes.data.data);
     };
 
-    fetchData();
+    load();
   }, [userId, currentUserId]);
 
-  // 🔥 Gửi tin nhắn
   const sendMessage = () => {
     if (!message.trim() || !socket) return;
-
     socket.emit("sendMessage", {
-      toUserId: userId,
       fromUserId: currentUserId,
+      toUserId: userId,
       message,
     });
 
-    // Tự thêm vào UI
     setMessages((prev) => [
       ...prev,
       {
         id: "local-" + Date.now(),
         fromUserId: currentUserId,
-        message,
+        toUserId: userId,
+        content: message,
         sentAt: new Date().toISOString(),
       },
     ]);
@@ -88,7 +88,7 @@ export default function ChatWindow({
       <div className="p-3 border-b flex justify-between items-center">
         <div className="flex items-center gap-2">
           <img
-            src={user.avt_url}
+            src={user.avt_url || "/t1.png"}
             className="rounded-full w-[30px] h-[30px] object-cover"
           />
           <span className="font-medium">{user.full_name}</span>
@@ -96,7 +96,7 @@ export default function ChatWindow({
         <button onClick={onClose}>✕</button>
       </div>
 
-      {/* MESSAGE BODY */}
+      {/* CHAT BODY */}
       <div className="flex-1 p-3 overflow-y-auto space-y-3">
         {messages.map((msg) => {
           const isMe = msg.fromUserId === currentUserId;
@@ -110,7 +110,7 @@ export default function ChatWindow({
             >
               {!isMe && (
                 <img
-                  src={user.avt_url}
+                  src={user.avt_url || "/t1.png"}
                   className="rounded-full w-[26px] h-[26px] object-cover"
                 />
               )}
@@ -120,7 +120,7 @@ export default function ChatWindow({
                   isMe ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-900"
                 }`}
               >
-                {msg.message}
+                {msg.content}
               </span>
 
               {isMe && (
@@ -134,7 +134,7 @@ export default function ChatWindow({
         })}
       </div>
 
-      {/* INPUT BOX */}
+      {/* INPUT */}
       <div className="p-3 border-t flex flex-row justify-between items-center">
         <input
           className="w-[85%] border rounded-lg p-2 text-sm"

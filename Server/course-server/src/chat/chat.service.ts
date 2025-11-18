@@ -4,8 +4,9 @@ import { ChatGateway } from 'src/socket/events.gateway';
 
 export interface ChatInfor {
   id: string;
-  message: string;
+  content: string;
   fromUserId: string;
+  toUserId: string;
   sentAt: Date;
   full_name?: string;
   avt_url?: string;
@@ -13,105 +14,95 @@ export interface ChatInfor {
 
 @Injectable()
 export class ChatService {
-  constructor(
-    @Inject('PRISMA_CLIENT') private readonly prisma: PrismaClient,
-    private readonly chatGateway: ChatGateway,
-  ) {}
+  constructor(@Inject('PRISMA_CLIENT') private readonly prisma: PrismaClient) {}
 
-  // ============================
-  // SEND MESSAGE
-  // ============================
-  async sendMessage(
-    instructorId: string,
-    studentId: string,
-    message: string,
-    fromUserId: string,
-  ) {
-    if (!message.trim()) return;
-
-    const saved = await this.prisma.instructorMsg.create({
-      data: {
-        instructorId,
-        studentId,
-        message,
-        fromUserId,
-      },
+  async markAsSeen(messageId: string) {
+    return this.prisma.chatMessage.update({
+      where: { id: messageId },
+      data: { seen: true, seenAt: new Date() },
     });
+  }
 
-    // realtime
-    this.chatGateway.sendToUser(studentId, {
-      id: saved.id,
-      message: saved.message,
-      fromUserId: saved.fromUserId,
-      sentAt: saved.sentAt,
+  async sendMessage(fromUserId: string, toUserId: string, content: string) {
+    if (!content.trim()) return;
+    const saved = await this.prisma.chatMessage.create({
+      data: {
+        fromUserId,
+        toUserId,
+        content,
+      },
+      include: {
+        fromUser: true,
+        toUser: true,
+      },
     });
 
     return saved;
   }
 
-  // ============================
-  // LẤY LỊCH SỬ CHAT GIỮA 2 USER
-  // ============================
-  async getAllMessages(
-    instructorId: string,
-    studentId: string,
-  ): Promise<ChatInfor[]> {
-    if (!instructorId || !studentId) {
-      throw new HttpException('Invalid user or instructor', 400);
+  async getAllMessages(userA: string, userB: string): Promise<ChatInfor[]> {
+    if (!userA || !userB) {
+      throw new HttpException('Invalid users', 400);
     }
 
-    const msgs = await this.prisma.instructorMsg.findMany({
+    const msgs = await this.prisma.chatMessage.findMany({
       where: {
-        instructorId,
-        studentId,
+        OR: [
+          { fromUserId: userA, toUserId: userB },
+          { fromUserId: userB, toUserId: userA },
+        ],
       },
-      orderBy: {
-        sentAt: 'asc', // phải ASC để chat hiển thị đúng thứ tự
-      },
+      orderBy: { sentAt: 'asc' },
       include: {
-        student: true,
+        fromUser: true,
       },
     });
 
     return msgs.map((m) => ({
       id: m.id,
-      message: m.message,
+      content: m.content,
       fromUserId: m.fromUserId,
+      toUserId: m.toUserId,
       sentAt: m.sentAt,
-      full_name: m.student.full_name ?? '',
-      avt_url: m.student.avt_url ?? '',
+      full_name: m.fromUser.full_name ?? '',
+      avt_url: m.fromUser.avt_url ?? '',
     }));
   }
 
-  // ============================
-  // LẤY DANH SÁCH CUỘC CHAT MỚI NHẤT
-  // ============================
-  async getAllChat(instructorId: string): Promise<ChatInfor[]> {
-    if (!instructorId) {
-      throw new HttpException('Invalid user', 400);
-    }
+  async getAllChat(userId: string): Promise<ChatInfor[]> {
+    if (!userId) throw new HttpException('Invalid user', 400);
 
-    const msgs = await this.prisma.instructorMsg.findMany({
-      where: { instructorId },
+    const msgs = await this.prisma.chatMessage.findMany({
+      where: {
+        OR: [{ fromUserId: userId }, { toUserId: userId }],
+      },
       orderBy: { sentAt: 'desc' },
-      include: { student: true },
+      include: {
+        fromUser: true,
+        toUser: true,
+      },
     });
 
-    const map = new Map<string, ChatInfor>();
+    const lastChat = new Map<string, ChatInfor>();
 
     for (const m of msgs) {
-      if (!map.has(m.studentId)) {
-        map.set(m.studentId, {
+      const otherId = m.fromUserId === userId ? m.toUserId : m.fromUserId;
+
+      if (!lastChat.has(otherId)) {
+        lastChat.set(otherId, {
           id: m.id,
-          message: m.message,
+          content: m.content,
           fromUserId: m.fromUserId,
+          toUserId: m.toUserId,
           sentAt: m.sentAt,
-          full_name: m.student.full_name ?? '',
-          avt_url: m.student.avt_url ?? '',
+          full_name:
+            (m.fromUserId === userId ? m.toUser : m.fromUser).full_name ?? '',
+          avt_url:
+            (m.fromUserId === userId ? m.toUser : m.fromUser).avt_url ?? '',
         });
       }
     }
 
-    return Array.from(map.values());
+    return Array.from(lastChat.values());
   }
 }

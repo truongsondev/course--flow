@@ -8,6 +8,6 @@ import { ChatGateway } from 'src/socket/events.gateway';
   imports: [DbModule],
   controllers: [ChatController],
   providers: [ChatService, ChatGateway],
-  exports: [ChatService, ChatGateway],
+  exports: [ChatService],
 })
 export class ChatModule {}

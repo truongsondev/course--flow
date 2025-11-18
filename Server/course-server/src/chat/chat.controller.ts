@@ -18,13 +18,13 @@ export class ChatController {
     return await this.chatService.getAllMessages(instructorId, studentId);
   }
 
-  @Post('send')
-  sendMessage(@Body() body: any) {
-    return this.chatService.sendMessage(
-      body.instructorId,
-      body.studentId,
-      body.message,
-      body.fromUserId,
-    );
-  }
+  // @Post('send')
+  // sendMessage(@Body() body: any) {
+  //   return this.chatService.sendMessage(
+  //     body.instructorId,
+  //     body.studentId,
+  //     body.message,
+  //     body.fromUserId,
+  //   );
+  // }
 }
