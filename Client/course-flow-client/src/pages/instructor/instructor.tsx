@@ -26,7 +26,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useNavigate } from "react-router";
 import type { StudentReponse } from "@/dto/response/user.response.dto";
 import userService from "@/services/user.service";
-import ChatWindow from "@/lib/chat/chat-windown";
+import ChatWindow from "@/chat/chat-windown";
 
 type Stats = {
   revenueByMonth: { month: string; revenue: number; students: number }[];

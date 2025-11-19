@@ -37,8 +37,6 @@ export class ChatGateway {
 
     // realtime
     this.sendToUser(toUserId, savedMessage);
-
-    return savedMessage;
   }
 
   @SubscribeMessage('seenMessage')

@@ -8,14 +8,14 @@ import { useEffect, useState } from "react";
 import io from "socket.io-client";
 
 export default function ChatWindow({
-  userId, // người mình đang chat (student)
+  userId,
   onClose,
 }: {
   userId: string;
   onClose: () => void;
 }) {
   const { user: userLogin } = useAuth();
-  const currentUserId = userLogin?.id || ""; // instructor/admin
+  const currentUserId = userLogin?.id || "";
 
   const [socket, setSocket] = useState<any>(null);
   const [message, setMessage] = useState("");
@@ -26,15 +26,10 @@ export default function ChatWindow({
     avt_url: "/t1.png",
   });
 
-  // ================================
-  // SOCKET INIT
-  // ================================
   useEffect(() => {
     const s = io("http://localhost:3001");
 
-    // đăng ký socket cho user đang login
     s.emit("register", currentUserId);
-    // nhận message realtime
     s.on("receiveMessage", (data) => {
       setMessages((prev) => [...prev, data]);
     });
@@ -61,23 +56,12 @@ export default function ChatWindow({
   }, [userId, currentUserId]);
 
   const sendMessage = () => {
-    if (!message.trim() || !socket) return;
+    if (!message.trim()) return;
     socket.emit("sendMessage", {
       fromUserId: currentUserId,
       toUserId: userId,
       message,
     });
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: "local-" + Date.now(),
-        fromUserId: currentUserId,
-        toUserId: userId,
-        content: message,
-        sentAt: new Date().toISOString(),
-      },
-    ]);
 
     setMessage("");
   };
@@ -91,7 +75,7 @@ export default function ChatWindow({
             src={user.avt_url || "/t1.png"}
             className="rounded-full w-[30px] h-[30px] object-cover"
           />
-          <span className="font-medium">{user.full_name}</span>
+          <span className="font-medium">{user.full_name || "Anonymous"}</span>
         </div>
         <button onClick={onClose}>✕</button>
       </div>

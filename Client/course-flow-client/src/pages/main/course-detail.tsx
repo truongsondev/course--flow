@@ -8,7 +8,7 @@ import { formatCurrency, passStringToJson } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatDuration } from "@/components/utils/util";
 import { useCourse } from "@/contexts/course-context";
-import ChatWindow from "@/lib/chat/chat-windown";
+import ChatWindow from "@/chat/chat-windown";
 
 export default function CourseDetail() {
   const { id } = useParams<{ id: string }>();

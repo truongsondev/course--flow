@@ -21,8 +21,8 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AvatarImage } from "@radix-ui/react-avatar";
 import authenService from "@/services/authen.service";
-import { ChatSidebar } from "@/lib/chat/chat-sidebar";
-import ChatWindow from "@/lib/chat/chat-windown";
+import { ChatSidebar } from "@/chat/chat-sidebar";
+import ChatWindow from "@/chat/chat-windown";
 
 interface HeaderPageProps {}
 

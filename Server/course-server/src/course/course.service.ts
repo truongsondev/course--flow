@@ -119,7 +119,7 @@ export class CourseService {
     `);
 
       if (!courses || courses.length === 0) {
-        throw new HttpException('No courses found', 404);
+        return null;
       }
 
       const formattedCourses = courses.map((c: any) => ({
