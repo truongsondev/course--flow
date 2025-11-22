@@ -34,8 +34,6 @@ export class ChatGateway {
       toUserId,
       message,
     );
-
-    // realtime
     this.sendToUser(toUserId, savedMessage);
   }
 
@@ -53,7 +51,6 @@ export class ChatGateway {
     }
   }
 
-  // giúp component khác gọi trực tiếp
   sendToUser(userId: string, payload: any) {
     const socketId = this.userSockets.get(userId);
     if (socketId) {

@@ -63,7 +63,7 @@ export class EndpointService {
           });
         }
 
-        toast.error(error.response?.data?.message || "An error occurred");
+        // toast.error(error.response?.data?.message || "An error occurred");
         return Promise.reject(error);
       }
     );

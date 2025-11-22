@@ -4,8 +4,8 @@ import type { UserChat } from "@/dto/response/user.response.dto";
 import chatService from "@/services/chat.service";
 import userService from "@/services/user.service";
 import { SendHorizontal } from "lucide-react";
-import { useEffect, useState } from "react";
-import io from "socket.io-client";
+import { useEffect, useRef, useState } from "react";
+import io, { Socket } from "socket.io-client";
 
 export default function ChatWindow({
   userId,
@@ -17,7 +17,7 @@ export default function ChatWindow({
   const { user: userLogin } = useAuth();
   const currentUserId = userLogin?.id || "";
 
-  const [socket, setSocket] = useState<any>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<ChatInfor[]>([]);
   const [user, setUser] = useState<UserChat>({
@@ -26,21 +26,48 @@ export default function ChatWindow({
     avt_url: "/t1.png",
   });
 
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // ---------------------------------------
+  // 1️⃣ TẠO SOCKET 1 LẦN
+  // ---------------------------------------
   useEffect(() => {
-    const s = io("http://localhost:3001");
-
-    s.emit("register", currentUserId);
-    s.on("receiveMessage", (data) => {
-      setMessages((prev) => [...prev, data]);
-    });
-
+    const s = io("http://localhost:3001", { transports: ["websocket"] });
     setSocket(s);
 
     return () => {
       s.disconnect();
     };
-  }, [currentUserId]);
+  }, []);
 
+  // ---------------------------------------
+  // 2️⃣ LẮNG NGHE RECEIVE MESSAGE – chỉ attach 1 lần
+  // ---------------------------------------
+  useEffect(() => {
+    if (!socket) return;
+
+    const handler = (data: ChatInfor) => {
+      setMessages((prev) => [...prev, data]);
+    };
+
+    socket.on("receiveMessage", handler);
+
+    return () => {
+      socket.off("receiveMessage", handler);
+    };
+  }, [socket]);
+
+  // ---------------------------------------
+  // 3️⃣ ĐĂNG KÝ USER VỚI SERVER
+  // ---------------------------------------
+  useEffect(() => {
+    if (!socket || !currentUserId) return;
+    socket.emit("register", currentUserId);
+  }, [socket, currentUserId]);
+
+  // ---------------------------------------
+  // 4️⃣ LOAD HISTORY + USER INFO
+  // ---------------------------------------
   useEffect(() => {
     const load = async () => {
       const [msgRes, userRes] = await Promise.all([
@@ -55,8 +82,31 @@ export default function ChatWindow({
     load();
   }, [userId, currentUserId]);
 
+  // ---------------------------------------
+  // 5️⃣ AUTO SCROLL TO BOTTOM
+  // ---------------------------------------
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // ---------------------------------------
+  // 6️⃣ GỬI TIN NHẮN
+  // ---------------------------------------
   const sendMessage = () => {
-    if (!message.trim()) return;
+    if (!message.trim() || !socket) return;
+
+    const tempMessage: ChatInfor = {
+      id: "local-" + Date.now(),
+      fromUserId: currentUserId,
+      toUserId: userId,
+      content: message,
+      sentAt: new Date().toISOString(),
+    };
+
+    // Hiển thị tin nhắn local
+    setMessages((prev) => [...prev, tempMessage]);
+
+    // Gửi lên server để lưu DB
     socket.emit("sendMessage", {
       fromUserId: currentUserId,
       toUserId: userId,
@@ -116,6 +166,8 @@ export default function ChatWindow({
             </div>
           );
         })}
+
+        <div ref={bottomRef}></div>
       </div>
 
       {/* INPUT */}
