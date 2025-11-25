@@ -2,8 +2,12 @@ import { HttpException, Inject } from '@nestjs/common';
 import { PrismaClient } from 'generated/prisma';
 import { UserUpdate } from 'src/dto/request/user/user-update.dto';
 import * as bcrypt from 'bcrypt';
+import { MinioService } from 'src/minio/minio.service';
 export class UserService {
-  constructor(@Inject('PRISMA_CLIENT') private readonly prisma: PrismaClient) {}
+  constructor(
+    @Inject('PRISMA_CLIENT') private readonly prisma: PrismaClient,
+    private readonly minioService: MinioService,
+  ) {}
   updateProfile = async (userId, full_name, bio) => {
     try {
       const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -107,6 +111,7 @@ export class UserService {
       email: user.email,
       role: user.role,
       bio: user.bio,
+      avt_url: user.avt_url,
       createdAt: user.createdAt,
       courses: user.courses.map((c) => ({
         id: c.id,
@@ -143,20 +148,43 @@ export class UserService {
     };
   }
 
-  async updateUserProfile(userId: string, data: any) {
-    const { fullName, bio } = data;
+  async updateUserProfile(
+    userId: string,
+    data: any,
+    avatar?: Express.Multer.File,
+  ) {
+    const { fullName, bio, email } = data;
+
+    let avatarUrl: string | undefined = undefined;
+
+    if (avatar) {
+      const objectName = await this.minioService.uploadFile(
+        'user-file',
+        avatar,
+      );
+
+      avatarUrl = await this.minioService.getPresignedUrl(
+        'user-file',
+        objectName,
+        3600 * 24 * 7,
+      );
+    }
+
     return await this.prisma.user.update({
       where: { id: userId },
       data: {
         ...(fullName && { full_name: fullName }),
-
         ...(bio && { bio }),
+        ...(email && { email }),
+
+        ...(avatarUrl && { avt_url: avatarUrl }),
       },
       select: {
         id: true,
         email: true,
         full_name: true,
         bio: true,
+        avt_url: true,
         role: true,
         user_verified: true,
         createdAt: true,

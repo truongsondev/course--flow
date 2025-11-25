@@ -54,7 +54,6 @@ export class ChatGateway {
   sendToUser(userId: string, payload: any) {
     const socketId = this.userSockets.get(userId);
     if (socketId) {
-      console.log('Chỗ này gọi');
       this.server.to(socketId).emit('receiveMessage', payload);
     }
   }

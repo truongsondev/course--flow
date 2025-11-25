@@ -37,11 +37,15 @@ class UserService {
     return endpointService.getEndpoint<ApiResponse<StudentReponse[]>>(url);
   }
 
-  public updateUser(id: string, data: any) {
+  public updateUserMultipart(id: string, formData: FormData) {
     const endpointService = EndpointService.getInstance();
     const url = endpoint.user.v1.updateProfile + "/" + id;
 
-    return endpointService.patchEndpoint<ApiResponse<any>>(url, data);
+    return endpointService.patchEndpoint<ApiResponse<any>>(url, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
   }
 }
 

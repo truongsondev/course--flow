@@ -219,7 +219,7 @@ const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
       {selectedUser && (
         <div className="fixed bottom-4 right-4 z-[9999]">
           <ChatWindow
-            userId={user?.id || ""}
+            userId={selectedUser?.fromUserId || ""}
             onClose={() => setSelectedUser(null)}
           />
         </div>

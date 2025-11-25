@@ -60,7 +60,7 @@ export function ChatSidebar({
               <div className="flex-1">
                 <div className="font-medium">{item.full_name || "Student"}</div>
                 <div className="text-sm text-gray-500 truncate">
-                  {item.message} · {item.sentAt.toString()}
+                  {item.content} · {item.sentAt.toString()}
                 </div>
               </div>
 

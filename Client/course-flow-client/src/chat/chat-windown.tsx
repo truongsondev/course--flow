@@ -28,9 +28,6 @@ export default function ChatWindow({
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // ---------------------------------------
-  // 1️⃣ TẠO SOCKET 1 LẦN
-  // ---------------------------------------
   useEffect(() => {
     const s = io("http://localhost:3001", { transports: ["websocket"] });
     setSocket(s);
@@ -40,9 +37,6 @@ export default function ChatWindow({
     };
   }, []);
 
-  // ---------------------------------------
-  // 2️⃣ LẮNG NGHE RECEIVE MESSAGE – chỉ attach 1 lần
-  // ---------------------------------------
   useEffect(() => {
     if (!socket) return;
 
@@ -57,23 +51,18 @@ export default function ChatWindow({
     };
   }, [socket]);
 
-  // ---------------------------------------
-  // 3️⃣ ĐĂNG KÝ USER VỚI SERVER
-  // ---------------------------------------
   useEffect(() => {
     if (!socket || !currentUserId) return;
     socket.emit("register", currentUserId);
   }, [socket, currentUserId]);
 
-  // ---------------------------------------
-  // 4️⃣ LOAD HISTORY + USER INFO
-  // ---------------------------------------
   useEffect(() => {
     const load = async () => {
       const [msgRes, userRes] = await Promise.all([
         chatService.getAllMessage(userId, currentUserId),
         userService.getUserChat(userId),
       ]);
+      console.log(msgRes.data.data);
 
       setMessages(msgRes.data.data);
       setUser(userRes.data.data);
@@ -82,16 +71,10 @@ export default function ChatWindow({
     load();
   }, [userId, currentUserId]);
 
-  // ---------------------------------------
-  // 5️⃣ AUTO SCROLL TO BOTTOM
-  // ---------------------------------------
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ---------------------------------------
-  // 6️⃣ GỬI TIN NHẮN
-  // ---------------------------------------
   const sendMessage = () => {
     if (!message.trim() || !socket) return;
 
@@ -103,10 +86,8 @@ export default function ChatWindow({
       sentAt: new Date().toISOString(),
     };
 
-    // Hiển thị tin nhắn local
     setMessages((prev) => [...prev, tempMessage]);
 
-    // Gửi lên server để lưu DB
     socket.emit("sendMessage", {
       fromUserId: currentUserId,
       toUserId: userId,
@@ -122,10 +103,10 @@ export default function ChatWindow({
       <div className="p-3 border-b flex justify-between items-center">
         <div className="flex items-center gap-2">
           <img
-            src={user.avt_url || "/t1.png"}
+            src={user?.avt_url || "/t1.png"}
             className="rounded-full w-[30px] h-[30px] object-cover"
           />
-          <span className="font-medium">{user.full_name || "Anonymous"}</span>
+          <span className="font-medium">{user?.full_name || "Anonymous"}</span>
         </div>
         <button onClick={onClose}>✕</button>
       </div>
@@ -174,7 +155,7 @@ export default function ChatWindow({
       <div className="p-3 border-t flex flex-row justify-between items-center">
         <input
           className="w-[85%] border rounded-lg p-2 text-sm"
-          placeholder={`Message ${user.full_name}...`}
+          placeholder={`Message ${user?.full_name}...`}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />

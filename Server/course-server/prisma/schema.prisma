@@ -13,8 +13,8 @@ model User {
   email     String   @unique
   password  String
   full_name String?
-  role      Role
-  avt_url   String?
+  role      Role 
+  avt_url   String?  @db.Text 
   bio       String?
   otp       String?
   otp_expiry  DateTime?

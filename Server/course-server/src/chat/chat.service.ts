@@ -42,6 +42,7 @@ export class ChatService {
 
   async getAllMessages(userA: string, userB: string): Promise<ChatInfor[]> {
     if (!userA || !userB) {
+      console.log('clt');
       throw new HttpException('Invalid users', 400);
     }
 
@@ -57,6 +58,7 @@ export class ChatService {
         fromUser: true,
       },
     });
+    console.log(msgs);
 
     return msgs.map((m) => ({
       id: m.id,

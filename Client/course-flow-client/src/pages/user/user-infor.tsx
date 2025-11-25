@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import userService from "@/services/user.service";
 import { useAuth } from "@/contexts/auth-context";
@@ -10,6 +10,7 @@ export default function FacebookStyleProfile() {
   const [tab, setTab] = useState("courses");
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authUser?.id) return;
@@ -17,9 +18,10 @@ export default function FacebookStyleProfile() {
       try {
         setLoading(true);
         const res = await userService.getUser(authUser.id);
+        console.log(res.data.data);
         setProfile(res.data.data);
       } catch (error: any) {
-        toast.error("Không thể tải dữ liệu người dùng.");
+        toast.error("Unable to load user data.");
       } finally {
         setLoading(false);
       }
@@ -27,13 +29,12 @@ export default function FacebookStyleProfile() {
     fetchUserProfile();
   }, [authUser?.id]);
 
-  if (loading)
-    return <div className="p-10 text-center">Đang tải dữ liệu...</div>;
+  if (loading) return <div className="p-10 text-center">Loading...</div>;
 
   if (!profile)
     return (
       <div className="p-10 text-center text-red-600">
-        Không tìm thấy thông tin người dùng.
+        User information not found.
       </div>
     );
 
@@ -50,7 +51,7 @@ export default function FacebookStyleProfile() {
             onClick={() => setIsEditing(true)}
             className="px-4 py-2 bg-black/70 text-white text-sm rounded-lg shadow hover:bg-black"
           >
-            Chỉnh sửa hồ sơ
+            Edit Profile
           </button>
         </div>
       </div>
@@ -59,25 +60,23 @@ export default function FacebookStyleProfile() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center gap-4">
             <img
-              src={"t1.png"}
+              src={profile.avt_url || "t1.png "}
               alt="Avatar"
               className="w-40 h-40 rounded-full border-4 border-white shadow-lg object-cover"
             />
             <div>
               <h1 className="text-3xl font-bold">{profile.fullName}</h1>
               <p className="text-gray-600">
-                {profile.bio || "Chưa có giới thiệu."}
+                {profile.bio || "No bio available."}
               </p>
             </div>
           </div>
 
           <div className="mt-6 border-t border-gray-200 flex gap-6 text-sm font-medium">
             {[
-              { id: "about", label: "Giới thiệu" },
-              { id: "courses", label: "Khóa học" },
-              { id: "skills", label: "Kỹ năng" },
-
-              // { id: "payments", label: "Thanh toán" },
+              { id: "about", label: "About" },
+              { id: "courses", label: "Courses" },
+              { id: "skills", label: "Skills" },
             ].map((t) => (
               <button
                 key={t.id}
@@ -98,16 +97,16 @@ export default function FacebookStyleProfile() {
       <div className="max-w-5xl mx-auto px-4 mt-6 space-y-6">
         {tab === "about" && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-2">Giới thiệu</h2>
+            <h2 className="text-lg font-semibold mb-2">About</h2>
             <p className="text-gray-700 leading-relaxed">
-              {profile.bio || "Chưa có thông tin giới thiệu."}
+              {profile.bio || "No introduction available."}
             </p>
           </div>
         )}
 
         {tab === "courses" && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Khóa học của tôi</h2>
+            <h2 className="text-lg font-semibold mb-4">My Courses</h2>
             <div className="grid sm:grid-cols-2 gap-4">
               {profile.courses?.length > 0 ? (
                 profile.courses.map((c: any) => (
@@ -120,7 +119,7 @@ export default function FacebookStyleProfile() {
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500">Bạn chưa có khóa học nào.</p>
+                <p className="text-gray-500">You have no courses.</p>
               )}
             </div>
           </div>
@@ -128,7 +127,7 @@ export default function FacebookStyleProfile() {
 
         {tab === "skills" && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Kỹ năng</h2>
+            <h2 className="text-lg font-semibold mb-4">Skills</h2>
             <div className="flex gap-2 flex-wrap">
               {["React", "Node.js", "SQL", "TypeScript"].map((skill, i) => (
                 <span
@@ -141,13 +140,6 @@ export default function FacebookStyleProfile() {
             </div>
           </div>
         )}
-
-        {/* {tab === "payments" && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Lịch sử thanh toán</h2>
-            <p className="text-gray-500 text-sm">Chưa có dữ liệu.</p>
-          </div>
-        )} */}
       </div>
 
       {isEditing && (
@@ -159,51 +151,120 @@ export default function FacebookStyleProfile() {
             >
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-xl font-bold mb-4">Chỉnh sửa hồ sơ</h2>
+            <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
             <form
               className="grid gap-4"
               onSubmit={async (e) => {
                 e.preventDefault();
                 try {
                   const form = e.target as HTMLFormElement;
-                  const fullName = (form[0] as HTMLInputElement).value;
-                  const bio = (form[1] as HTMLTextAreaElement).value;
 
-                  await userService.updateUser(authUser?.id || "", {
+                  const email = (
+                    form.elements.namedItem("email") as HTMLInputElement
+                  ).value;
+                  const fullName = (
+                    form.elements.namedItem("fullName") as HTMLInputElement
+                  ).value;
+                  const bio = (
+                    form.elements.namedItem("bio") as HTMLTextAreaElement
+                  ).value;
+                  const avatarFile = (
+                    form.elements.namedItem("avatar") as HTMLInputElement
+                  ).files?.[0];
+
+                  const formData = new FormData();
+                  formData.append("email", email);
+                  formData.append("fullName", fullName);
+                  formData.append("bio", bio);
+
+                  if (avatarFile) {
+                    formData.append("avatar", avatarFile);
+                  }
+
+                  await userService.updateUserMultipart(
+                    authUser?.id || "",
+                    formData
+                  );
+
+                  setProfile({
+                    ...profile,
                     fullName,
+                    email,
                     bio,
+                    avt_url: avatarPreview || profile.avt_url,
                   });
-                  setProfile({ ...profile, fullName, bio });
-                  toast.success("Cập nhật hồ sơ thành công!");
+
+                  toast.success("Profile updated successfully!");
                   setIsEditing(false);
                 } catch {
-                  toast.error("Không thể cập nhật hồ sơ.");
+                  toast.error("Unable to update profile.");
                 }
               }}
             >
+              {/* EMAIL */}
               <input
-                placeholder="Họ và tên"
+                name="email"
+                placeholder="Email"
+                defaultValue={profile.email}
+                className="w-full border rounded px-3 py-2"
+              />
+
+              {/* FULL NAME */}
+              <input
+                name="fullName"
+                placeholder="Full Name"
                 defaultValue={profile.fullName}
                 className="w-full border rounded px-3 py-2"
               />
+
+              {/* AVATAR UPLOAD + LIVE PREVIEW */}
+              <div>
+                <label className="block mb-1 text-sm font-medium">Avatar</label>
+                <input
+                  type="file"
+                  name="avatar"
+                  accept="image/*"
+                  className="w-full border rounded px-3 py-2"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const previewUrl = URL.createObjectURL(file);
+                      setAvatarPreview(previewUrl);
+                    }
+                  }}
+                />
+
+                {/* PREVIEW */}
+                {(avatarPreview || profile.avt_url) && (
+                  <img
+                    src={avatarPreview || profile.avt_url}
+                    alt="Preview"
+                    className="mt-3 w-32 h-32 rounded-full object-cover border shadow"
+                  />
+                )}
+              </div>
+
+              {/* BIO */}
               <textarea
-                placeholder="Giới thiệu"
+                name="bio"
+                placeholder="Bio"
                 defaultValue={profile.bio}
                 className="w-full border rounded px-3 py-2 h-24"
               />
+
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
                   className="px-4 py-2 bg-gray-100 rounded"
                 >
-                  Hủy
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
-                  Lưu
+                  Save
                 </button>
               </div>
             </form>

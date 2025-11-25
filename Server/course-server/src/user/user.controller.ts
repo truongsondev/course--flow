@@ -1,5 +1,14 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { UserService } from './user.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller()
 export class UsersController {
@@ -11,11 +20,13 @@ export class UsersController {
   }
 
   @Patch('update-profile/:id')
+  @UseInterceptors(FileInterceptor('avatar'))
   async updateUser(
     @Param('id') id: string,
-    @Body() body: { fullName?: string; bio?: string },
+    @UploadedFile() avatar: Express.Multer.File,
+    @Body() body: { email?: string; fullName?: string; bio?: string },
   ) {
-    return this.userService.updateUserProfile(id, body);
+    return this.userService.updateUserProfile(id, body, avatar);
   }
 
   @Get('student/:instructorId')
