@@ -176,4 +176,5 @@ export interface DashboardResponse {
   stats: DashboardStats;
   performance: CoursePerformance[];
   activity: DashboardActivity[];
+  chart: { month: string; revenue: number; students: number }[];
 }

@@ -31,6 +31,12 @@ class AuthenService {
     );
   }
 
+  public async forget(email: string) {
+    const endpointService = EndpointService.getInstance();
+    const url = endpoint.auth.v1.forget;
+    return await endpointService.postEndpoint<ApiResponse<any>>(url, { email });
+  }
+
   public async register(data: authRequest) {
     const endpointService = EndpointService.getInstance();
     const url = endpoint.auth.v1.signup;
@@ -66,6 +72,21 @@ class AuthenService {
     const url = endpoint.auth.v1.checkRole;
     return await endpointService.postEndpoint<ApiResponse<string>>(url, {
       userId,
+    });
+  }
+
+  public async resetPassword(
+    userId: string,
+    newPassword: string,
+    oldPassword: string
+  ) {
+    const endpointService = EndpointService.getInstance();
+    const url = endpoint.auth.v1.resetPssword;
+
+    return await endpointService.postEndpoint<ApiResponse<string>>(url, {
+      userId,
+      newPassword,
+      oldPassword,
     });
   }
 

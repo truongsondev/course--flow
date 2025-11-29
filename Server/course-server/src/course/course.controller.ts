@@ -153,14 +153,16 @@ export class CoursesController {
 
   @Get('dashboard/:id')
   async getDashboard(@Param('id') id: string) {
-    const stats = await this.courseService.getDashboardStats(id);
+    const stats = await this.courseService.getStats(id);
     const performance = await this.courseService.getCoursePerformance(id);
     const activity = await this.courseService.getRecentActivity(id);
-
+    const chart = await this.courseService.getMonthlyStats(id);
+    console.log(chart);
     return {
       stats,
       performance,
       activity,
+      chart,
     };
   }
 }

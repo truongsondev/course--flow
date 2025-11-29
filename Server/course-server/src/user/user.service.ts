@@ -3,10 +3,13 @@ import { PrismaClient } from 'generated/prisma';
 import { UserUpdate } from 'src/dto/request/user/user-update.dto';
 import * as bcrypt from 'bcrypt';
 import { MinioService } from 'src/minio/minio.service';
+import { lastValueFrom } from 'rxjs';
+import { ClientKafka } from '@nestjs/microservices';
 export class UserService {
   constructor(
     @Inject('PRISMA_CLIENT') private readonly prisma: PrismaClient,
     private readonly minioService: MinioService,
+    @Inject('OTP_KAFKA') private readonly kafka: ClientKafka,
   ) {}
   updateProfile = async (userId, full_name, bio) => {
     try {
@@ -246,5 +249,76 @@ export class UserService {
       },
     });
     return user;
+  }
+
+  async becomeInstructor(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new HttpException('User not found', 404);
+    }
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { role: 'instructor' },
+    });
+    return updatedUser;
+  }
+
+  async forgetPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
+      throw new HttpException('User not found', 404);
+    }
+    const generatePassword = Math.random().toString(8).slice(-8);
+    if (user?.email) {
+      lastValueFrom(
+        this.kafka.emit('forget.send', {
+          email: user.email,
+          generatePassword: generatePassword,
+          ts: new Date().toISOString(),
+        }),
+      );
+    }
+    const hashedPassword = await bcrypt.hash(generatePassword, 10);
+    const updatedUser = await this.prisma.user.update({
+      where: { email },
+      data: { password: hashedPassword },
+    });
+    return {
+      message: 'New password has been sent to your email',
+      user: updatedUser,
+    };
+  }
+
+  async resetPassword(
+    userId: string,
+    newPassword: string,
+    oldPassword: string,
+  ) {
+    if (!userId) {
+      throw new HttpException('UserId is required', 400);
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new HttpException('User not found', 404);
+    }
+    const isPasswordMatching = await bcrypt.compare(oldPassword, user.password);
+    if (!isPasswordMatching) {
+      throw new HttpException('Old password is incorrect', 400);
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+    return {
+      message: 'Password has been reset successfully',
+      user: updatedUser,
+    };
   }
 }

@@ -1,4 +1,3 @@
-import { ProfilePage } from "@/components/instructor/profile-page";
 import { Topbar } from "@/components/instructor/topbar";
 import { Sidebar } from "@/components/instructor/sidebar";
 import React, { useEffect, useState } from "react";
@@ -65,11 +64,6 @@ const StudentsPage: React.FC<{ students: StudentReponse[] }> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-xl font-semibold">Students</h3>
-        <Button>+ Invite Student</Button>
-      </div>
-
       <Card className="rounded-2xl">
         <CardHeader>
           <CardTitle>All students</CardTitle>
@@ -84,28 +78,34 @@ const StudentsPage: React.FC<{ students: StudentReponse[] }> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {students.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell>{s.full_name || "Updating"}</TableCell>
-                  <TableCell>{s.email}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="ghost">
-                        View
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setOpenChat(true);
-                          setSelectedUser(s.id);
-                        }}
-                        size="sm"
-                      >
-                        Message
-                      </Button>
-                    </div>
-                  </TableCell>
+              {students && students.length > 0 ? (
+                students.map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell>{s.full_name || "Updating"}</TableCell>
+                    <TableCell>{s.email}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost">
+                          View
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setOpenChat(true);
+                            setSelectedUser(s.id);
+                          }}
+                          size="sm"
+                        >
+                          Message
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow className="text-align w-full">
+                  No students found.
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -158,6 +158,7 @@ export default function InstructorDashboard() {
       try {
         const res = await courseService.getDataForDashboard(user?.id || "");
         setDashboard(res.data.data);
+        console.log(res.data.data);
       } catch (err) {}
     };
 
@@ -180,7 +181,7 @@ export default function InstructorDashboard() {
         return;
       }
     };
-    // checkRole();
+    checkRole();
   });
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -202,11 +203,11 @@ export default function InstructorDashboard() {
               }
               performance={dashboard?.performance || []}
               activity={dashboard?.activity || []}
+              chart={dashboard?.chart || []}
             />
           )}
           {active === "courses" && <CoursesPage courses={courses} />}
           {active === "students" && <StudentsPage students={students} />}
-          {active === "settings" && <ProfilePage />}
         </div>
       </div>
     </div>

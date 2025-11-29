@@ -16,6 +16,8 @@ import CheckoutPagePro from "@/pages/main/payment";
 import CourseWatch from "@/pages/main/cours-watch";
 import InstructorApprovalPage from "@/pages/admin/Instructor-approvalPage";
 import SuccessStep from "@/components/pages/successStep";
+import ForgetPasswordPage from "@/pages/auth/fotget-password";
+import ChangePasswordPage from "@/pages/auth/change-password";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -58,6 +60,14 @@ const router = createBrowserRouter([
       {
         path: "verify-otp",
         element: <OtpPage />,
+      },
+      {
+        path: "forgot-password",
+        element: <ForgetPasswordPage />,
+      },
+      {
+        path: "reset-password",
+        element: <ChangePasswordPage />,
       },
     ],
   },

@@ -66,6 +66,7 @@ export class CourseService {
   }
 
   async searchCourses(keyword: string) {
+    // this.elastic.clearCoursesData();
     await this.elastic.ensureIndexExists('courses');
     const courseInElas = await this.elastic.search('courses', {
       multi_match: {
@@ -1112,9 +1113,6 @@ export class CourseService {
     };
   }
 
-  // ------------------------------------------------------
-  // 2. Thống kê chi tiết per course
-  // ------------------------------------------------------
   async getCoursePerformance(instructorId: string) {
     const courses = await this.prisma.course.findMany({
       where: { instructorId },
@@ -1151,9 +1149,6 @@ export class CourseService {
     });
   }
 
-  // ------------------------------------------------------
-  // 3. Recent activity (gộp từ enrollment, review, progress, note)
-  // ------------------------------------------------------
   async getRecentActivity(instructorId: string) {
     const enrollments = await this.prisma.enrollment.findMany({
       where: { course: { instructorId } },
@@ -1210,5 +1205,54 @@ export class CourseService {
     activity.sort((a, b) => b.time.getTime() - a.time.getTime());
 
     return activity.slice(0, 10);
+  }
+
+  async getStats(instructorId: string) {
+    const totalCourses = await this.prisma.course.count({
+      where: { instructorId },
+    });
+
+    const totalStudents = await this.prisma.enrollment.count({
+      where: { course: { instructorId } },
+    });
+
+    const totalOrders = totalStudents;
+
+    const revenueData = await this.prisma.$queryRaw<{ revenue: number }[]>`
+    SELECT SUM(c.price) AS revenue
+    FROM enrollments e
+    JOIN courses c ON e.courseId = c.id
+    WHERE c.instructorId = ${instructorId}
+  `;
+
+    return {
+      totalCourses,
+      totalStudents,
+      totalOrders,
+      totalRevenue: revenueData[0]?.revenue || 0,
+    };
+  }
+
+  async getMonthlyStats(instructorId: string) {
+    const data = await this.prisma.$queryRaw<
+      { month: string; revenue: any; students: any }[]
+    >`
+    SELECT 
+      DATE_FORMAT(e.enrolledAt, '%Y-%m') AS month,
+      SUM(c.price) AS revenue,
+      COUNT(*) AS students
+    FROM enrollments e
+    JOIN courses c ON e.courseId = c.id
+    WHERE c.instructorId = ${instructorId}
+      AND e.enrolledAt >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+    GROUP BY month
+    ORDER BY month;
+  `;
+
+    return data.map((row) => ({
+      month: row.month,
+      revenue: Number(row.revenue),
+      students: Number(row.students),
+    }));
   }
 }

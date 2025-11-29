@@ -120,7 +120,6 @@ export const CoursesPage: React.FC<{ courses: CourseInstructorResponse[] }> = ({
       console.log(err);
       toast("Failed to edit course. Please try again.");
     }
-    console.log("course edit:::", course);
   };
 
   return (

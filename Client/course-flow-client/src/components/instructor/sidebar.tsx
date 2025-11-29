@@ -1,20 +1,24 @@
 import { BarChart2, BookOpen, LogOut, Settings, Users } from "lucide-react";
+import { useNavigate } from "react-router";
 
 export const Sidebar: React.FC<{
   active: string;
   setActive: (s: string) => void;
 }> = ({ active, setActive }) => {
+  const navigate = useNavigate();
   const menu = [
     { key: "dashboard", label: "Dashboard", icon: <BarChart2 size={18} /> },
     { key: "courses", label: "Courses", icon: <BookOpen size={18} /> },
     { key: "students", label: "Students", icon: <Users size={18} /> },
-    { key: "settings", label: "Settings", icon: <Settings size={18} /> },
   ];
 
   return (
     <aside className="w-72 bg-white border-r min-h-screen flex flex-col justify-between">
       <div>
-        <div className="px-6 py-6 flex items-center gap-3">
+        <div
+          onClick={() => navigate("/")}
+          className="px-6 py-6 flex items-center gap-3"
+        >
           <div className="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center text-white font-bold">
             T1
           </div>

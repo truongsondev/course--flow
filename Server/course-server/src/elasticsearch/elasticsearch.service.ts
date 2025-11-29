@@ -44,6 +44,16 @@ export class ElasticService {
       console.error(`Failed to ensure index [${index}]`, error);
     }
   }
+  async clearCoursesData() {
+    await this.elastic.deleteByQuery({
+      index: 'courses',
+      body: {
+        query: {
+          match_all: {},
+        },
+      },
+    });
+  }
   async search(index: string, query: any) {
     const result = await this.elastic.search({
       index,

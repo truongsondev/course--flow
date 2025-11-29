@@ -23,6 +23,8 @@ import { AvatarImage } from "@radix-ui/react-avatar";
 import authenService from "@/services/authen.service";
 import { ChatSidebar } from "@/chat/chat-sidebar";
 import ChatWindow from "@/chat/chat-windown";
+import userService from "@/services/user.service";
+import { toast } from "sonner";
 
 interface HeaderPageProps {}
 
@@ -53,6 +55,20 @@ const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
       document.body.style.overflow = "";
     };
   }, [openChat]);
+
+  const becomeToInstructor = async () => {
+    try {
+      if (!user || !user.id) return;
+      const res = await userService.becomeToInstructor(user.id);
+      if (res.data.success) {
+        navigate("/instructor");
+      } else {
+        toast.error("Failed to become an instructor.");
+      }
+    } catch (error) {
+      console.log("Error become to instructor:", error);
+    }
+  };
 
   return (
     <>
@@ -110,16 +126,16 @@ const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
                   onClick={() => setOpenChat(true)}
                 >
                   <MessageCircle className="w-5 h-5" />
-                  <span className="absolute top-1 right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                  {/* <span className="absolute top-1 right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
                     1
-                  </span>
+                  </span> */}
                 </button>
 
                 <button className="relative p-2 rounded-full hover:bg-gray-100">
                   <Bell className="w-5 h-5" />
-                  <span className="absolute top-1 right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                  {/* <span className="absolute top-1 right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
                     3
-                  </span>
+                  </span> */}
                 </button>
 
                 <DropdownMenu>
@@ -160,10 +176,20 @@ const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
                       Manager account
                     </DropdownMenuItem>
                     {role === "instructor" && (
-                      <DropdownMenuItem onClick={() => navigate("/instructor")}>
-                        <BookOpen className="w-4 h-4 mr-2 " />
-                        Manager course
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuItem
+                          onClick={() => navigate("/instructor")}
+                        >
+                          <BookOpen className="w-4 h-4 mr-2 " />
+                          Manager course
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => navigate("/my-courses")}
+                        >
+                          <BookOpen className="w-4 h-4 mr-2 " />
+                          course Registed
+                        </DropdownMenuItem>
+                      </>
                     )}
 
                     {role === "student" && (
@@ -174,9 +200,7 @@ const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
                           <BookOpen className="w-4 h-4 mr-2 " />
                           Manager courses
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => navigate("/my-courses")}
-                        >
+                        <DropdownMenuItem onClick={() => becomeToInstructor()}>
                           <Blocks className="w-4 h-4 mr-2 " />
                           Become to instructor
                         </DropdownMenuItem>
@@ -184,10 +208,10 @@ const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
                     )}
 
                     <DropdownMenuItem
-                      onClick={() => console.log("Toggle theme")}
+                      onClick={() => navigate("/auth/reset-password")}
                     >
                       <Moon className="mr-2 h-4 w-4" />
-                      Theme mod
+                      Change password
                     </DropdownMenuItem>
 
                     <DropdownMenuItem onClick={logout}>
@@ -219,7 +243,7 @@ const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
       {selectedUser && (
         <div className="fixed bottom-4 right-4 z-[9999]">
           <ChatWindow
-            userId={selectedUser?.fromUserId || ""}
+            userId={selectedUser?.toUserId || ""}
             onClose={() => setSelectedUser(null)}
           />
         </div>

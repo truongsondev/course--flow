@@ -1,11 +1,16 @@
 import { HttpException, Inject, Injectable } from '@nestjs/common';
+import { ClientKafka } from '@nestjs/microservices';
 import crypto from 'crypto';
 import { PrismaClient } from 'generated/prisma';
 import * as qs from 'qs';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class PaymentService {
-  constructor(@Inject('PRISMA_CLIENT') private readonly prisma: PrismaClient) {}
+  constructor(
+    @Inject('PRISMA_CLIENT') private readonly prisma: PrismaClient,
+    @Inject('OTP_KAFKA') private readonly kafka: ClientKafka,
+  ) {}
   private readonly vnp_TmnCode =
     process.env.VNPAY_TMN_CODE || 'YOUR_SANDBOX_TMNCODE';
   private readonly vnp_HashSecret =
@@ -81,7 +86,7 @@ export class PaymentService {
     const createDate = this.formatDate(date);
 
     const order = await this.createOrderId(dto.courseId, dto.userId);
-    const orderInfo = `Pay for order ${order.id}`;
+    const orderInfo = `Pay for order ${order.id} `;
     const expireDate = this.formatDate(
       new Date(date.getTime() + 10 * 60 * 1000),
     );
@@ -109,6 +114,18 @@ export class PaymentService {
       .createHmac('sha512', this.vnp_HashSecret)
       .update(new Buffer(signData, 'utf-8'))
       .digest('hex');
+    const userEmail = await this.prisma.user.findUnique({
+      where: { id: dto.userId },
+    });
+    if (userEmail?.email) {
+      lastValueFrom(
+        this.kafka.emit('course.send', {
+          email: userEmail.email,
+          orderId: order.id,
+          ts: new Date().toISOString(),
+        }),
+      );
+    }
 
     const paymentUrl = `${this.vnp_Url}?${signData}&vnp_SecureHash=${secureHash}`;
 

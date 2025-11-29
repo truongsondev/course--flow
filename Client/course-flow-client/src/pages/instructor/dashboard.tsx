@@ -1,6 +1,16 @@
 import { StatCard } from "@/components/instructor/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
+import {
+  LineChart,
+  Line,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import { Activity, BookOpen, DollarSign, Users } from "lucide-react";
 
 type DashboardStats = {
@@ -28,10 +38,12 @@ export function DashboardPage({
   stats,
   performance,
   activity,
+  chart,
 }: {
   stats: DashboardStats;
   performance: CoursePerformance[];
   activity: DashboardActivity[];
+  chart: { month: string; revenue: number; students: number }[];
 }) {
   return (
     <div className="space-y-6">
@@ -40,28 +52,24 @@ export function DashboardPage({
           title="Total Students"
           value={stats.totalStudents}
           icon={<Users size={18} />}
-          delta="+3.4%"
         />
 
         <StatCard
           title="Total Revenue"
           value={`$${stats.totalRevenue.toLocaleString()}`}
           icon={<DollarSign size={18} />}
-          delta="+1.2%"
         />
 
         <StatCard
           title="Total Courses"
           value={stats.totalCourses}
           icon={<BookOpen size={18} />}
-          delta="+0.5%"
         />
 
         <StatCard
           title="Orders"
           value={stats.totalOrders}
           icon={<Activity size={18} />}
-          delta="-0.8%"
         />
       </div>
 
@@ -72,9 +80,50 @@ export function DashboardPage({
           </CardHeader>
 
           <CardContent>
-            <div className="text-sm text-gray-400 py-10 text-center">
-              Chart will be displayed here...
-            </div>
+            {chart.length === 0 ? (
+              <p className="text-sm text-gray-500 py-10 text-center">
+                No chart data available.
+              </p>
+            ) : (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={chart}
+                    margin={{ top: 20, right: 20, left: 0, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+
+                    {/* Month */}
+                    <XAxis dataKey="month" />
+
+                    {/* Values */}
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" />
+
+                    <Tooltip />
+                    <Legend />
+
+                    {/* Revenue (bar) */}
+                    <Bar
+                      yAxisId="left"
+                      dataKey="revenue"
+                      fill="#4f46e5"
+                      name="Revenue"
+                    />
+
+                    {/* Students (line) */}
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="students"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      name="Students"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 

@@ -100,7 +100,7 @@ const RegisterPage: FunctionComponent = () => {
               <Button
                 variant="link"
                 className="text-blue-400 hover:underline ml-1"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/auth/login")}
               >
                 Login
               </Button>

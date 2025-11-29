@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -37,5 +38,26 @@ export class UsersController {
   @Get('chat-user/:id')
   async getUserChat(@Param('id') id: string) {
     return this.userService.getUserChat(id);
+  }
+
+  @Get('become-intructor/:userId')
+  async becomeInstructor(@Param('userId') userId: string) {
+    return this.userService.becomeInstructor(userId);
+  }
+
+  @Post('auth/forget-password')
+  async forgetPassword(@Body() body: { email: string }) {
+    return this.userService.forgetPassword(body.email);
+  }
+
+  @Post('auth/reset-password')
+  async resetPassword(
+    @Body() body: { userId: string; oldPassword: string; newPassword: string },
+  ) {
+    return this.userService.resetPassword(
+      body.userId,
+      body.newPassword,
+      body.oldPassword,
+    );
   }
 }

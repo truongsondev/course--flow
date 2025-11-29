@@ -35,6 +35,8 @@ export const endpoint = {
       getSignatureUrl: `/auth/get-signature`,
       checkRole: `/auth/check-role`,
       refreshToken: `/auth/refresh-token`,
+      forget: `/auth/forget-password`,
+      resetPssword: `/auth/reset-password`,
     },
   },
   user: {
@@ -44,6 +46,7 @@ export const endpoint = {
       checkRole: `/check-role`,
       getStudent: "/student",
       userChat: "/chat-user",
+      becomeToInstructor: "/become-intructor",
     },
   },
   chat: {

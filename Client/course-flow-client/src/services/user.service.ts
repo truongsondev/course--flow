@@ -47,6 +47,13 @@ class UserService {
       },
     });
   }
+
+  public becomeToInstructor(id: string) {
+    const endpointService = EndpointService.getInstance();
+    const url = endpoint.user.v1.becomeToInstructor + "/" + id;
+
+    return endpointService.getEndpoint<ApiResponse<any>>(url);
+  }
 }
 
 const userService = UserService.getInstance();
