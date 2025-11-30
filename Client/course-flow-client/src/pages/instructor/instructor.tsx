@@ -138,6 +138,7 @@ export default function InstructorDashboard() {
         );
         if (result.data.success && result.data.data) {
           setCourses(result.data.data);
+          console.log(result.data.data);
         }
       } catch (error) {
         toast.error("Access denied.");

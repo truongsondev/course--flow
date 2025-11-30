@@ -500,9 +500,9 @@ export class CourseService {
     return course;
   }
 
-  async editCourse(meta: any, files: any): Promise<any> {
+  async editCourse(meta: any, files: Express.Multer.File[]): Promise<any> {
     const uploadedUrls = await Promise.all(
-      files.map(async (file) => {
+      (files || []).map(async (file) => {
         const objectName = await this.minioService.uploadFile(
           'course-files',
           file,

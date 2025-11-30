@@ -1,0 +1,50 @@
+{
+  "hero": {
+    "title1": "Học trực tuyến chuyên sâu",
+    "title2": "Xây kỹ năng, đạt mục tiêu",
+    "subtitle": "Khoá học thực tế, giảng viên kinh nghiệm, nội dung cập nhật. Từ lập trình đến thiết kế đến DevOps — học mọi lúc, mọi nơi.",
+    "searchPlaceholder": "Tìm khóa học: React, Design, DevOps...",
+    "searchButton": "Tìm",
+    "ratingLabel": "Trung bình học viên",
+    "instructorCount": "+120 giảng viên",
+    "instructorLabel": "Chuyên gia ngành",
+    "featuredLabel": "Khoá học nổi bật"
+  },
+
+  "featuredFallback": {
+    "title": "React Pro: Xây dựng dự án thực tế",
+    "lessons": "12 bài học",
+    "hours": "3 giờ",
+    "level": "Trung cấp",
+    "price": "39$"
+  },
+
+  "categories": {
+    "sectionTitle": "Danh mục khóa học"
+  },
+
+  "courses": {
+    "sectionTitle": "Khóa học nổi bật",
+    "empty": "Hiện chưa có khóa học nào."
+  },
+
+  "pagination": {
+    "previous": "← Trước",
+    "next": "Tiếp →",
+    "page": "Trang",
+    "of": "trên"
+  },
+
+  "instructors": {
+    "sectionTitle": "Tại sao chọn chúng tôi",
+    "subtitle": "Nội dung thực tiễn, hỗ trợ 1:1, cộng đồng học tập, đánh giá chất lượng và chứng nhận.",
+    "benefits": {
+      "1": "Bài tập và dự án thực tế",
+      "2": "Giảng viên giàu kinh nghiệm",
+      "3": "Cộng đồng hỗ trợ & mentor"
+    },
+    "benefitNote": "Chi tiết ngắn mô tả lợi ích.",
+    "instructorName": "Giảng viên",
+    "expertise": "Chuyên môn"
+  }
+}

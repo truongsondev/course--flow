@@ -105,8 +105,10 @@ export class CoursesController {
     @Body() course: any,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    console.log(course);
+    console.log('course:::', course);
     const meta = JSON.parse(course.meta);
+    console.log('meta:::', meta);
+    console.log('files:::', files);
     return this.courseService.editCourse(meta, files);
   }
 

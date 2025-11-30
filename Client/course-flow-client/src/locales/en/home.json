@@ -1,0 +1,50 @@
+{
+  "hero": {
+    "title1": "Intensive online learning",
+    "title2": "Build skill, achieve the goal",
+    "subtitle": "Practical courses, experienced instructors, up-to-date content. From programming to design to DevOps — learn anytime, anywhere.",
+    "searchPlaceholder": "Search course: React, Design, DevOps...",
+    "searchButton": "Search",
+    "ratingLabel": "Average student",
+    "instructorCount": "+120 instructors",
+    "instructorLabel": "Industry experts",
+    "featuredLabel": "Featured course"
+  },
+
+  "featuredFallback": {
+    "title": "React Pro: Build Real Projects",
+    "lessons": "12 lessons",
+    "hours": "3 hours",
+    "level": "Intermediate",
+    "price": "$39"
+  },
+
+  "categories": {
+    "sectionTitle": "Course categories"
+  },
+
+  "courses": {
+    "sectionTitle": "Outstanding courses",
+    "empty": "No course available at this time."
+  },
+
+  "pagination": {
+    "previous": "← Previous",
+    "next": "Next →",
+    "page": "Page",
+    "of": "of"
+  },
+
+  "instructors": {
+    "sectionTitle": "Why choose us",
+    "subtitle": "Practical content, 1:1 tutor support, community, quality assessment and certification.",
+    "benefits": {
+      "1": "Practical exercises and projects",
+      "2": "Industry instructors",
+      "3": "Community support & mentors"
+    },
+    "benefitNote": "Short detail describing the benefit.",
+    "instructorName": "Instructor",
+    "expertise": "Expertise"
+  }
+}

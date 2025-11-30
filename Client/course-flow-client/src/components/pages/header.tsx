@@ -25,10 +25,12 @@ import { ChatSidebar } from "@/chat/chat-sidebar";
 import ChatWindow from "@/chat/chat-windown";
 import userService from "@/services/user.service";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface HeaderPageProps {}
 
 const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [role, setRole] = useState<string | null>(null);
   const { user, logout } = useAuth();
@@ -69,7 +71,9 @@ const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
       console.log("Error become to instructor:", error);
     }
   };
-
+  const changeLanguage = (lang: "vi" | "en") => {
+    i18n.changeLanguage(lang);
+  };
   return (
     <>
       <header className="bg-white/60 backdrop-blur sticky top-0 z-30 shadow-sm">
@@ -119,6 +123,29 @@ const HeaderPage: FunctionComponent<HeaderPageProps> = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => changeLanguage("vi")}
+                className={`px-3 py-1 text-sm rounded-md border ${
+                  i18n.language === "vi"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white"
+                }`}
+              >
+                VI
+              </button>
+              <button
+                onClick={() => changeLanguage("en")}
+                className={`px-3 py-1 text-sm rounded-md border ${
+                  i18n.language === "en"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white"
+                }`}
+              >
+                EN
+              </button>
+            </div>
+
             {user ? (
               <div className="flex items-center gap-3">
                 <button

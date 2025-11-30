@@ -1,19 +1,10 @@
 import { useEffect, useState, type JSX } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
+
 import CategoryPage from "@/components/pages/category";
-
-type Course = {
-  id: number;
-  title: string;
-  author: string;
-  price: string;
-  rating: number;
-  students: string;
-  cover: string;
-  tags: string[];
-};
-
 import Course from "@/components/pages/course";
+
 import type {
   CategoriesResponse,
   CourseHomeResponse,
@@ -22,21 +13,21 @@ import courseService from "@/services/course.service";
 import { formatCurrency } from "@/lib/utils";
 
 export default function HomePage(): JSX.Element {
+  const { t } = useTranslation("home");
+
   const [courses, setCourses] = useState<CourseHomeResponse[]>([]);
   const [category, setCategory] = useState<CategoriesResponse[]>([]);
   const [search, setSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
+
   const fetchCourse = async (pageNumber: number = 1) => {
     const res = await courseService.getCourse(4, pageNumber);
     setCourses(res.data.data.data);
     setTotalPages(res.data.data.meta.totalPages);
   };
-  useEffect(() => {
-    const fetchData = async () => {
-      await Promise.all([fetchCourse(), fetchCategory()]);
-    };
 
+  useEffect(() => {
     const fetchCategory = async () => {
       const res = await courseService.getAllCategories();
       if (res.data.data.length <= 6) {
@@ -45,6 +36,11 @@ export default function HomePage(): JSX.Element {
       const data = res.data.data.slice(0, 6);
       setCategory(data);
     };
+
+    const fetchData = async () => {
+      await Promise.all([fetchCourse(), fetchCategory()]);
+    };
+
     fetchData();
   }, []);
 
@@ -55,15 +51,15 @@ export default function HomePage(): JSX.Element {
   const searchCourse = async () => {
     try {
       const res = await courseService.searchCourse(search);
-      console.log(res.data.data);
       setCourses(res.data.data);
     } catch (error) {
-      console.error("Error searching courses:", error);
+      console.error("Search course error: ", error);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900">
+      {/* ---------------- HERO ---------------- */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-50 via-white to-pink-50"></div>
 
@@ -75,22 +71,21 @@ export default function HomePage(): JSX.Element {
               transition={{ duration: 0.6 }}
               className="text-4xl md:text-6xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-pink-500"
             >
-              Intensive online learning
+              {t("hero.title1")}
               <br />
-              <span className="text-slate-800">
-                Build skill, achieve the goal
-              </span>
+              <span className="text-slate-800">{t("hero.title2")}</span>
             </motion.h1>
+
             <p className="mt-6 text-lg text-slate-600 max-w-xl">
-              Practical courses, experienced instructors, up-to-date content.
-              From programming to design to DevOps — learn anytime, anywhere.
+              {t("hero.subtitle")}
             </p>
 
+            {/* SEARCH BOX */}
             <div className="mt-8 flex gap-3 items-center">
               <div className="flex-1 bg-white rounded-2xl shadow-xl p-3 flex items-center gap-3 border border-slate-200">
                 <input
                   className="flex-1 outline-none text-sm"
-                  placeholder="Search course: React, Design, DevOps..."
+                  placeholder={t("hero.searchPlaceholder")}
                   aria-label="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -99,11 +94,12 @@ export default function HomePage(): JSX.Element {
                   onClick={searchCourse}
                   className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm shadow hover:bg-indigo-700 transition"
                 >
-                  Tìm
+                  {t("hero.searchButton")}
                 </button>
               </div>
             </div>
 
+            {/* INFO BOXES */}
             <div className="mt-8 flex items-center gap-8 text-sm text-slate-500">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center font-semibold text-indigo-600">
@@ -111,7 +107,7 @@ export default function HomePage(): JSX.Element {
                 </div>
                 <div>
                   <div className="text-base font-semibold">4.8/5</div>
-                  <div className="text-xs">Average student</div>
+                  <div className="text-xs">{t("hero.ratingLabel")}</div>
                 </div>
               </div>
 
@@ -120,12 +116,16 @@ export default function HomePage(): JSX.Element {
                   👩‍🏫
                 </div>
                 <div>
-                  <div className="text-base font-semibold">+120 instructor</div>
-                  <div className="text-xs">Industry expert</div>
+                  <div className="text-base font-semibold">
+                    {t("hero.instructorCount")}
+                  </div>
+                  <div className="text-xs">{t("hero.instructorLabel")}</div>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* ---------------- FEATURED COURSE ---------------- */}
           {courses.length > 0 ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
@@ -147,18 +147,21 @@ export default function HomePage(): JSX.Element {
               <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur rounded-2xl shadow-lg p-4 w-72">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs text-slate-500">Featured lock</div>
+                    <div className="text-xs text-slate-500">
+                      {t("hero.featuredLabel")}
+                    </div>
                     <div className="font-semibold">
-                      {courses[0]?.title || "React Pro: Build Real Projects"}
+                      {courses[0]?.title ?? t("featuredFallback.title")}
                     </div>
                   </div>
                   <div className="text-sm text-indigo-600 font-semibold">
-                    {formatCurrency(Number(courses[0]?.price) || 0) || "$0"}
+                    {formatCurrency(Number(courses[0]?.price) || 0)}
                   </div>
                 </div>
               </div>
             </motion.div>
           ) : (
+            // FALLBACK UI
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -176,19 +179,22 @@ export default function HomePage(): JSX.Element {
               <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur rounded-2xl shadow-lg p-4 w-72">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs text-slate-500">Featured lock</div>
+                    <div className="text-xs text-slate-500">
+                      {t("hero.featuredLabel")}
+                    </div>
                     <div className="font-semibold">
-                      React Pro: Build Real Projects
+                      {t("featuredFallback.title")}
                     </div>
                   </div>
                   <div className="text-sm text-indigo-600 font-semibold">
-                    $39
+                    {t("featuredFallback.price")}
                   </div>
                 </div>
+
                 <div className="mt-3 grid grid-cols-3 gap-3 text-xs text-slate-600">
-                  <div>12 lession</div>
-                  <div>3 hourse</div>
-                  <div>Intermediate</div>
+                  <div>{t("featuredFallback.lessons")}</div>
+                  <div>{t("featuredFallback.hours")}</div>
+                  <div>{t("featuredFallback.level")}</div>
                 </div>
               </div>
             </motion.div>
@@ -196,28 +202,30 @@ export default function HomePage(): JSX.Element {
         </div>
       </section>
 
+      {/* ---------------- CATEGORIES ---------------- */}
       <CategoryPage categories={category} />
 
+      {/* ---------------- COURSE LIST ---------------- */}
       <section id="courses" className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-semibold">Outstanding courses</h3>
+          <h3 className="text-2xl font-semibold">
+            {t("courses.sectionTitle")}
+          </h3>
         </div>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {courses && courses.length > 0 ? (
+          {courses.length > 0 ? (
             courses.map((course) => <Course key={course.id} course={course} />)
           ) : (
             <div className="col-span-full text-center text-gray-500 py-12 bg-white rounded-xl shadow-sm border border-gray-100">
-              <p className="text-lg font-medium">
-                No course available at this time.
-              </p>
+              <p className="text-lg font-medium">{t("courses.empty")}</p>
             </div>
           )}
         </div>
 
+        {/* PAGINATION */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-4 mt-10 select-none">
-            {/* Nút Prev */}
             <button
               disabled={page === 1}
               onClick={() => setPage((p) => p - 1)}
@@ -227,17 +235,16 @@ export default function HomePage(): JSX.Element {
                   : "bg-white hover:bg-indigo-50 border-gray-300 text-gray-700 hover:border-indigo-300"
               }`}
             >
-              ← Previous
+              {t("pagination.previous")}
             </button>
 
-            {/* Số trang */}
             <span className="text-sm font-medium text-gray-600">
-              Page <span className="text-indigo-600 font-semibold">{page}</span>{" "}
-              of{" "}
+              {t("pagination.page")}{" "}
+              <span className="text-indigo-600 font-semibold">{page}</span>{" "}
+              {t("pagination.of")}{" "}
               <span className="text-gray-800 font-semibold">{totalPages}</span>
             </span>
 
-            {/* Nút Next */}
             <button
               disabled={page === totalPages}
               onClick={() => setPage((p) => p + 1)}
@@ -247,38 +254,38 @@ export default function HomePage(): JSX.Element {
                   : "bg-white hover:bg-indigo-50 border-gray-300 text-gray-700 hover:border-indigo-300"
               }`}
             >
-              Next →
+              {t("pagination.next")}
             </button>
           </div>
         )}
       </section>
 
+      {/* ---------------- INSTRUCTORS ---------------- */}
       <section id="instructors" className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <div>
-            <h3 className="text-2xl font-semibold">Why choose we</h3>
+            <h3 className="text-2xl font-semibold">
+              {t("instructors.sectionTitle")}
+            </h3>
             <p className="mt-3 text-slate-600 max-w-lg">
-              Practical content, 1:1 tutor support, community, quality
-              assessment and certification.
+              {t("instructors.subtitle")}
             </p>
 
             <ul className="mt-6 grid grid-cols-1 gap-3">
-              {[
-                "Practical exercises and projects",
-                "Industry instructors",
-                "Community support & mentors",
-              ].map((t) => (
+              {[1, 2, 3].map((i) => (
                 <li
-                  key={t}
+                  key={i}
                   className="bg-white p-4 rounded-2xl shadow flex items-start gap-3"
                 >
                   <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
                     ✓
                   </div>
                   <div>
-                    <div className="font-medium">{t}</div>
+                    <div className="font-medium">
+                      {t(`instructors.benefits.${i}`)}
+                    </div>
                     <div className="text-xs text-slate-500">
-                      Chi tiết ngắn mô tả lợi ích.
+                      {t("instructors.benefitNote")}
                     </div>
                   </div>
                 </li>
@@ -286,6 +293,7 @@ export default function HomePage(): JSX.Element {
             </ul>
           </div>
 
+          {/* Right Column */}
           <div className="hidden md:block">
             <div className="bg-white rounded-2xl shadow p-6">
               <div className="grid grid-cols-2 gap-4">
@@ -297,8 +305,12 @@ export default function HomePage(): JSX.Element {
                       className="w-14 h-14 rounded-lg object-cover"
                     />
                     <div>
-                      <div className="font-medium">Instructor {i + 1}</div>
-                      <div className="text-xs text-slate-500">Expertise</div>
+                      <div className="font-medium">
+                        {t("instructors.instructorName")} {i + 1}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {t("instructors.expertise")}
+                      </div>
                     </div>
                   </div>
                 ))}

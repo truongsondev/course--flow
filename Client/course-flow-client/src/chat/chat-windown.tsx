@@ -62,7 +62,6 @@ export default function ChatWindow({
         chatService.getAllMessage(userId, currentUserId),
         userService.getUserChat(userId),
       ]);
-      console.log(msgRes.data.data);
 
       setMessages(msgRes.data.data);
       setUser(userRes.data.data);
