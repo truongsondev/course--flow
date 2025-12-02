@@ -31,7 +31,6 @@ export class AuthService {
   }
   async signUp(email: string, password: string) {
     const otp = this.generateOtp();
-    console.log(otp);
     try {
       const otpToken = await this.prisma.$transaction(async (tx) => {
         const user = await tx.user.findUnique({ where: { email } });
