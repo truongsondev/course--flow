@@ -43,7 +43,6 @@ export class PaymentService {
   }
 
   async confirmEnrollment(orderId: string) {
-    console.log('cosv ô dây');
     const isEnrolled = await this.prisma.enrollment.findFirst({
       where: {
         courseId: orderId,

@@ -66,7 +66,7 @@ export class CourseService {
   }
 
   async searchCourses(keyword: string) {
-    // this.elastic.clearCoursesData();
+    this.elastic.clearCoursesData();
     await this.elastic.ensureIndexExists('courses');
     const courseInElas = await this.elastic.search('courses', {
       multi_match: {
@@ -978,7 +978,6 @@ export class CourseService {
   }
 
   async markLectureCompleted(idLecture: string) {
-    console.log(idLecture);
     const lesson = await this.prisma.lesson.update({
       where: { id: idLecture },
       data: { lessionStatus: true },
